@@ -61,6 +61,66 @@ class DrawingApp {
         context.closePath();
     }
 
+    private addClick(x: number, y: number, dragging: boolean) {
+        this.clickX.push(x);
+        this.clickY.push(y);
+        this.clickDrag.push(dragging);
+    }
+
+    private clearCanvas() {
+        this.context
+            .clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.clickX = [];
+        this.clickY = [];
+        this.clickDrag = [];
+    }
+
+    private clearEventHandler = () => {
+        this.clearCanvas();
+    }
+
+    private releaseEventHandler = () => {
+        this.paint = false;
+        this.redraw();
+    }
+
+    private cancelEventHandler = () => {
+        this.paint = false;
+    }
+
+    private pressEventHandler = (e: MouseEvent | TouchEvent) => {
+        let mouseX = (e as TouchEvent).changedTouches ?
+                     (e as TouchEvent).changedTouches[0].pageX :
+                     (e as MouseEvent).pageX;
+        let mouseY = (e as TouchEvent).changedTouches ?
+                     (e as TouchEvent).changedTouches[0].pageY :
+                     (e as MouseEvent).pageY;
+        mouseX -= this.canvas.offsetLeft;
+        mouseY -= this.canvas.offsetTop;
+
+        this.paint = true;
+        this.addClick(mouseX, mouseY, false);
+        this.redraw();
+    }
+
+    private dragEventHandler = (e: MouseEvent | TouchEvent) => {
+        let mouseX = (e as TouchEvent).changedTouches ?
+                     (e as TouchEvent).changedTouches[0].pageX :
+                     (e as MouseEvent).pageX;
+        let mouseY = (e as TouchEvent).changedTouches ?
+                     (e as TouchEvent).changedTouches[0].pageY :
+                     (e as MouseEvent).pageY;
+        mouseX -= this.canvas.offsetLeft;
+        mouseY -= this.canvas.offsetTop;
+
+        if (this.paint) {
+            this.addClick(mouseX, mouseY, true);
+            this.redraw();
+        }
+
+        e.preventDefault();
+    }
+
 
 }
 
