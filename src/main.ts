@@ -9,6 +9,8 @@ class DrawingApp {
     private clickY: number[] = [];
     private clickDrag: boolean[] = [];
 
+    private image: HTMLImageElement;
+
     constructor() {
         let canvas = document.getElementById('canvas') as
                      HTMLCanvasElement;
@@ -20,6 +22,8 @@ class DrawingApp {
 
         this.canvas = canvas;
         this.context = context;
+        this.image = new Image();
+        this.image.src = "mfc_tiles.jpg";
 
         this.redraw();
         this.createUserEvents();
@@ -42,23 +46,57 @@ class DrawingApp {
                 .addEventListener("click", this.clearEventHandler);
     }
 
+    private gridSize = 6;
+    private borderSize = 10;
+
+    private getTileX(tileId: number, tileWidth: number,
+                     leftX: number, rightX: number): number {
+       
+        let allWidth = rightX - leftX;
+        let allTileWidth = tileWidth * this.gridSize;
+        let allGapWidth = allWidth - allTileWidth;
+        let gapWidth = allGapWidth / (this.gridSize - 1);
+
+        return Math.floor(leftX + this.borderSize + (tileWidth + gapWidth) * tileId);
+    }
+
+    private getTileRect(tileId: number): number[] {
+        let tileSizeX = 310;
+        let tileSizeY = 310;
+        let bottomRightX = 2253;
+        let bottomRightY = 2297;
+        let topLeftX = 53;
+        let topLeftY = 61;
+        let x1 = this.getTileX(tileId % this.gridSize,
+                               tileSizeX, topLeftX, bottomRightX);
+        let y1 = this.getTileX(Math.floor(tileId / this.gridSize) % this.gridSize,
+                               tileSizeY, topLeftY, bottomRightY);
+        return [x1, y1,
+                x1 + tileSizeX - (this.borderSize * 2),
+                y1 + tileSizeY - (this.borderSize * 2)];
+    }
+
     private redraw() {
         let clickX = this.clickX;
         let context = this.context;
-        let clickDrag = this.clickDrag;
+        //let clickDrag = this.clickDrag;
         let clickY = this.clickY;
-        for (let i = 0; i < clickX.length; ++i) {
-            context.beginPath();
-            if (clickDrag[i] && i) {
-                context.moveTo(clickX[i - 1], clickY[i - 1]);
-            } else {
-                context.moveTo(clickX[i] - 1, clickY[i]);
-            }
+        //let canvas = this.canvas;
 
-            context.lineTo(clickX[i], clickY[i]);
-            context.stroke();
+
+
+        //context.beginPath();
+        context.fillStyle = 'blue';
+        for (let i = 0; i < clickX.length; ++i) {
+            let tileRect = this.getTileRect(i);
+            context.drawImage(this.image,
+                              tileRect[0], tileRect[1],
+                              tileRect[2] - tileRect[0], tileRect[3] - tileRect[1],
+                              clickX[i], clickY[i],
+                              100, 100);
         }
-        context.closePath();
+        //context.clip();
+        //context.closePath();
     }
 
     private addClick(x: number, y: number, dragging: boolean) {
