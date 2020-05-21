@@ -3,16 +3,14 @@ class DrawingApp {
 
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
-    private paint: boolean;
-
-    private clickX: number[] = [];
-    private clickY: number[] = [];
-    private clickDrag: boolean[] = [];
 
     private image: HTMLImageElement;
 
     private tileX: number[] = [];
     private tileY: number[] = [];
+
+    private mouseDownXY: number[] = [];
+    private mouseTile: number = -1;
 
     constructor() {
         let canvas = document.getElementById('canvas') as
@@ -28,7 +26,6 @@ class DrawingApp {
         this.image = new Image();
         this.image.src = "mfc_tiles.jpg";
 
-        this.paint = true;
         this.createUserEvents();
         this.initTileXY();
         this.redraw();
@@ -78,8 +75,6 @@ class DrawingApp {
         canvas.addEventListener("touchend", this.releaseEventHandler);
         canvas.addEventListener("touchcancel", this.cancelEventHandler);
 
-        document.getElementById('clear')
-                .addEventListener("click", this.clearEventHandler);
     }
 
     private borderSize = 10;
@@ -89,79 +84,100 @@ class DrawingApp {
         let context = this.context;
 
         //context.beginPath();
-        context.fillStyle = 'blue';
+        context.fillStyle = 'white';
 
         let tileBorderSize = this.borderSize + this.tileSize;
+        context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        for (let y = 0; y < 6; y++) {
-            for (let x = 0; x < 6; x++) {
-                let i = (y * 6) + x;
-                context.drawImage(this.image,
-                                  this.tileX[i], this.tileY[i],
-                                  this.origTileSize, this.origTileSize,
-                                  (x * tileBorderSize) + this.borderSize,
-                                  (y * tileBorderSize) + this.borderSize,
-                                  this.tileSize, this.tileSize);
+        if (this.mouseTile < 0) {
+            for (let y = 0; y < 6; y++) {
+                for (let x = 0; x < 6; x++) {
+                    let i = (y * 6) + x;
+                    context.drawImage(this.image,
+                                      this.tileX[i], this.tileY[i],
+                                      this.origTileSize, this.origTileSize,
+                                      (x * tileBorderSize) + this.borderSize,
+                                      (y * tileBorderSize) + this.borderSize,
+                                      this.tileSize, this.tileSize);
+                }
             }
+        } else {
+            let i = this.mouseTile;
+            context.drawImage(this.image,
+                              this.tileX[i], this.tileY[i],
+                              this.origTileSize, this.origTileSize,
+                              this.borderSize, this.borderSize,
+                              this.origGridSize * tileBorderSize, this.origGridSize * tileBorderSize);
         }
         //context.clip();
         //context.closePath();
     }
 
-    private addClick(x: number, y: number, dragging: boolean) {
-        this.clickX.push(x);
-        this.clickY.push(y);
-        this.clickDrag.push(dragging);
-    }
-
-    private clearCanvas() {
-        this.context
-            .clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.clickX = [];
-        this.clickY = [];
-        this.clickDrag = [];
-    }
-
-    private clearEventHandler = () => {
-        this.clearCanvas();
-    }
-
     private releaseEventHandler = () => {
-        this.paint = false;
+        this.mouseTile = -1;
         this.redraw();
+
+        let t = "[";
+        for (let i = 0; i < (this.origGridSize * this.origGridSize); i++) {
+            t += this.tileX[i];
+            t += ",";
+            t += this.tileY[i];
+            t += ",";
+        }
+        t += "0]";
+
+        let text = document.getElementById('text') as
+                     HTMLElement;
+        text.innerHTML = t;
     }
 
     private cancelEventHandler = () => {
-        this.paint = false;
+        this.mouseTile = -1;
+    }
+
+    private getMouseXY(e: MouseEvent | TouchEvent): number[] {
+        let mouseX = (e as TouchEvent).changedTouches ?
+                     (e as TouchEvent).changedTouches[0].pageX :
+                     (e as MouseEvent).pageX;
+        let mouseY = (e as TouchEvent).changedTouches ?
+                     (e as TouchEvent).changedTouches[0].pageY :
+                     (e as MouseEvent).pageY;
+        mouseX -= this.canvas.offsetLeft;
+        mouseY -= this.canvas.offsetTop;
+        return [mouseX, mouseY];
     }
 
     private pressEventHandler = (e: MouseEvent | TouchEvent) => {
-        let mouseX = (e as TouchEvent).changedTouches ?
-                     (e as TouchEvent).changedTouches[0].pageX :
-                     (e as MouseEvent).pageX;
-        let mouseY = (e as TouchEvent).changedTouches ?
-                     (e as TouchEvent).changedTouches[0].pageY :
-                     (e as MouseEvent).pageY;
-        mouseX -= this.canvas.offsetLeft;
-        mouseY -= this.canvas.offsetTop;
-
-        this.paint = true;
-        this.addClick(mouseX, mouseY, false);
-        this.redraw();
+        this.mouseDownXY = this.getMouseXY(e);
+        let x = this.mouseDownXY[0];
+        let y = this.mouseDownXY[1];
+        let tileBorderSize = this.borderSize + this.tileSize;
+        x = Math.floor(x / tileBorderSize);
+        y = Math.floor(y / tileBorderSize);
+        if ((x >= 0) && (x < this.origGridSize) && (y >= 0) && (y < this.origGridSize)) {
+            this.mouseTile = x + (y * this.origGridSize);
+        } else {
+            this.mouseTile = -1;
+        }
     }
 
     private dragEventHandler = (e: MouseEvent | TouchEvent) => {
-        let mouseX = (e as TouchEvent).changedTouches ?
-                     (e as TouchEvent).changedTouches[0].pageX :
-                     (e as MouseEvent).pageX;
-        let mouseY = (e as TouchEvent).changedTouches ?
-                     (e as TouchEvent).changedTouches[0].pageY :
-                     (e as MouseEvent).pageY;
-        mouseX -= this.canvas.offsetLeft;
-        mouseY -= this.canvas.offsetTop;
-
-        if (this.paint) {
-            this.addClick(mouseX, mouseY, true);
+        if (this.mouseTile >= 0) {
+            let mouseDragXY = this.getMouseXY(e);
+            let dx = mouseDragXY[0] - this.mouseDownXY[0];
+            let dy = mouseDragXY[1] - this.mouseDownXY[1];
+            let i = this.mouseTile;
+            this.tileX[i] -= dx;
+            this.tileY[i] -= dy;
+            if (this.tileX[i] < 0) { this.tileX[i] = 0; }
+            if (this.tileY[i] < 0) { this.tileY[i] = 0; }
+            if (this.tileX[i] >= (this.image.width - this.origTileSize)) {
+                this.tileX[i] = this.image.width - this.origTileSize - 1;
+            }
+            if (this.tileY[i] >= (this.image.height - this.origTileSize)) {
+                this.tileY[i] = this.image.height - this.origTileSize - 1;
+            }
+            this.mouseDownXY = mouseDragXY;
             this.redraw();
         }
 
