@@ -28,35 +28,36 @@ class DrawingApp {
         this.image = new Image();
         this.image.src = "mfc_tiles.jpg";
 
-        this.redraw();
+        this.paint = true;
         this.createUserEvents();
         this.initTileXY();
+        this.redraw();
     }
 
-    private gridSize = 6;
-    private borderSize = 0;
-    private tileSize = 310;
+    private origGridSize = 6;
+    private origBorderSize = 0;
+    private origTileSize = 310;
 
     private getTileX(tileId: number, tileWidth: number,
                      leftX: number, rightX: number): number {
        
         let allWidth = rightX - leftX;
-        let allTileWidth = tileWidth * this.gridSize;
+        let allTileWidth = tileWidth * this.origGridSize;
         let allGapWidth = allWidth - allTileWidth;
-        let gapWidth = allGapWidth / (this.gridSize - 1);
+        let gapWidth = allGapWidth / (this.origGridSize - 1);
 
-        return Math.floor(leftX + this.borderSize + (tileWidth + gapWidth) * tileId);
+        return Math.floor(leftX + this.origBorderSize + (tileWidth + gapWidth) * tileId);
     }
 
     private initTileXY() {
-        for (let y = 0; y < this.gridSize; y++) {
-            for (let x = 0; x < this.gridSize; x++) {
-                let bottomRightX = 2253;
-                let bottomRightY = 2297;
-                let topLeftX = 53;
-                let topLeftY = 61;
-                let x1 = this.getTileX(x, this.tileSize, topLeftX, bottomRightX);
-                let y1 = this.getTileX(y, this.tileSize, topLeftY, bottomRightY);
+        let bottomRightX = 2253;
+        let bottomRightY = 2297;
+        let topLeftX = 53;
+        let topLeftY = 61;
+        for (let y = 0; y < this.origGridSize; y++) {
+            for (let x = 0; x < this.origGridSize; x++) {
+                let x1 = this.getTileX(x, this.origTileSize, topLeftX, bottomRightX);
+                let y1 = this.getTileX(y, this.origTileSize, topLeftY, bottomRightY);
                 this.tileX.push(x1);
                 this.tileY.push(y1);
             }
@@ -81,19 +82,26 @@ class DrawingApp {
                 .addEventListener("click", this.clearEventHandler);
     }
 
+    private borderSize = 10;
+    private tileSize = 90;
+
     private redraw() {
         let context = this.context;
 
         //context.beginPath();
         context.fillStyle = 'blue';
+
+        let tileBorderSize = this.borderSize + this.tileSize;
+
         for (let y = 0; y < 6; y++) {
             for (let x = 0; x < 6; x++) {
                 let i = (y * 6) + x;
                 context.drawImage(this.image,
                                   this.tileX[i], this.tileY[i],
-                                  this.tileSize, this.tileSize,
-                                  50 + (x * 100), 50 + (y * 100),
-                                  90, 90);
+                                  this.origTileSize, this.origTileSize,
+                                  (x * tileBorderSize) + this.borderSize,
+                                  (y * tileBorderSize) + this.borderSize,
+                                  this.tileSize, this.tileSize);
             }
         }
         //context.clip();
