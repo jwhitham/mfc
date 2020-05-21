@@ -11,6 +11,9 @@ class DrawingApp {
 
     private image: HTMLImageElement;
 
+    private tileX: number[] = [];
+    private tileY: number[] = [];
+
     constructor() {
         let canvas = document.getElementById('canvas') as
                      HTMLCanvasElement;
@@ -27,7 +30,39 @@ class DrawingApp {
 
         this.redraw();
         this.createUserEvents();
+        this.initTileXY();
     }
+
+    private gridSize = 6;
+    private borderSize = 0;
+    private tileSize = 310;
+
+    private getTileX(tileId: number, tileWidth: number,
+                     leftX: number, rightX: number): number {
+       
+        let allWidth = rightX - leftX;
+        let allTileWidth = tileWidth * this.gridSize;
+        let allGapWidth = allWidth - allTileWidth;
+        let gapWidth = allGapWidth / (this.gridSize - 1);
+
+        return Math.floor(leftX + this.borderSize + (tileWidth + gapWidth) * tileId);
+    }
+
+    private initTileXY() {
+        for (let y = 0; y < this.gridSize; y++) {
+            for (let x = 0; x < this.gridSize; x++) {
+                let bottomRightX = 2253;
+                let bottomRightY = 2297;
+                let topLeftX = 53;
+                let topLeftY = 61;
+                let x1 = this.getTileX(x, this.tileSize, topLeftX, bottomRightX);
+                let y1 = this.getTileX(y, this.tileSize, topLeftY, bottomRightY);
+                this.tileX.push(x1);
+                this.tileY.push(y1);
+            }
+        }
+    }
+
 
     private createUserEvents() {
         let canvas = this.canvas;
@@ -46,54 +81,20 @@ class DrawingApp {
                 .addEventListener("click", this.clearEventHandler);
     }
 
-    private gridSize = 6;
-    private borderSize = 10;
-
-    private getTileX(tileId: number, tileWidth: number,
-                     leftX: number, rightX: number): number {
-       
-        let allWidth = rightX - leftX;
-        let allTileWidth = tileWidth * this.gridSize;
-        let allGapWidth = allWidth - allTileWidth;
-        let gapWidth = allGapWidth / (this.gridSize - 1);
-
-        return Math.floor(leftX + this.borderSize + (tileWidth + gapWidth) * tileId);
-    }
-
-    private getTileRect(tileId: number): number[] {
-        let tileSizeX = 310;
-        let tileSizeY = 310;
-        let bottomRightX = 2253;
-        let bottomRightY = 2297;
-        let topLeftX = 53;
-        let topLeftY = 61;
-        let x1 = this.getTileX(tileId % this.gridSize,
-                               tileSizeX, topLeftX, bottomRightX);
-        let y1 = this.getTileX(Math.floor(tileId / this.gridSize) % this.gridSize,
-                               tileSizeY, topLeftY, bottomRightY);
-        return [x1, y1,
-                x1 + tileSizeX - (this.borderSize * 2),
-                y1 + tileSizeY - (this.borderSize * 2)];
-    }
-
     private redraw() {
-        let clickX = this.clickX;
         let context = this.context;
-        //let clickDrag = this.clickDrag;
-        let clickY = this.clickY;
-        //let canvas = this.canvas;
-
-
 
         //context.beginPath();
         context.fillStyle = 'blue';
-        for (let i = 0; i < clickX.length; ++i) {
-            let tileRect = this.getTileRect(i);
-            context.drawImage(this.image,
-                              tileRect[0], tileRect[1],
-                              tileRect[2] - tileRect[0], tileRect[3] - tileRect[1],
-                              clickX[i], clickY[i],
-                              100, 100);
+        for (let y = 0; y < 6; y++) {
+            for (let x = 0; x < 6; x++) {
+                let i = (y * 6) + x;
+                context.drawImage(this.image,
+                                  this.tileX[i], this.tileY[i],
+                                  this.tileSize, this.tileSize,
+                                  50 + (x * 100), 50 + (y * 100),
+                                  90, 90);
+            }
         }
         //context.clip();
         //context.closePath();
