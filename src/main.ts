@@ -6,8 +6,11 @@ class DrawingApp {
 
     private image: HTMLImageElement;
 
-    private tileX: number[] = [];
-    private tileY: number[] = [];
+    private tileXY: number[] = 
+           [49,61,423,55,789,54,1211,61,1579,62,1943,62,52,430,423,427,795,423,1216,429,1581,
+            429,1952,430,52,843,423,846,795,842,1210,842,1580,841,1943,844,48,1217,423,1219,
+            796,1217,1208,1212,1581,1213,1944,1215,56,1641,421,1637,794,1636,1211,1630,1581,
+            1633,1940,1627,55,2004,427,2009,794,2004,1215,2002,1582,2000,1945,1994];
 
     private mouseDownXY: number[] = [];
     private mouseTile: number = -1;
@@ -27,40 +30,11 @@ class DrawingApp {
         this.image.src = "mfc_tiles.jpg";
 
         this.createUserEvents();
-        this.initTileXY();
         this.redraw();
     }
 
     private origGridSize = 6;
-    private origBorderSize = 0;
     private origTileSize = 310;
-
-    private getTileX(tileId: number, tileWidth: number,
-                     leftX: number, rightX: number): number {
-       
-        let allWidth = rightX - leftX;
-        let allTileWidth = tileWidth * this.origGridSize;
-        let allGapWidth = allWidth - allTileWidth;
-        let gapWidth = allGapWidth / (this.origGridSize - 1);
-
-        return Math.floor(leftX + this.origBorderSize + (tileWidth + gapWidth) * tileId);
-    }
-
-    private initTileXY() {
-        let bottomRightX = 2253;
-        let bottomRightY = 2297;
-        let topLeftX = 53;
-        let topLeftY = 61;
-        for (let y = 0; y < this.origGridSize; y++) {
-            for (let x = 0; x < this.origGridSize; x++) {
-                let x1 = this.getTileX(x, this.origTileSize, topLeftX, bottomRightX);
-                let y1 = this.getTileX(y, this.origTileSize, topLeftY, bottomRightY);
-                this.tileX.push(x1);
-                this.tileY.push(y1);
-            }
-        }
-    }
-
 
     private createUserEvents() {
         let canvas = this.canvas;
@@ -92,9 +66,9 @@ class DrawingApp {
         if (this.mouseTile < 0) {
             for (let y = 0; y < 6; y++) {
                 for (let x = 0; x < 6; x++) {
-                    let i = (y * 6) + x;
+                    let i = ((y * 6) + x) * 2;
                     context.drawImage(this.image,
-                                      this.tileX[i], this.tileY[i],
+                                      this.tileXY[i], this.tileXY[i + 1],
                                       this.origTileSize, this.origTileSize,
                                       (x * tileBorderSize) + this.borderSize,
                                       (y * tileBorderSize) + this.borderSize,
@@ -102,9 +76,9 @@ class DrawingApp {
                 }
             }
         } else {
-            let i = this.mouseTile;
+            let i = this.mouseTile * 2;
             context.drawImage(this.image,
-                              this.tileX[i], this.tileY[i],
+                              this.tileXY[i], this.tileXY[i + 1],
                               this.origTileSize, this.origTileSize,
                               this.borderSize, this.borderSize,
                               this.origGridSize * tileBorderSize, this.origGridSize * tileBorderSize);
@@ -119,9 +93,9 @@ class DrawingApp {
 
         let t = "[";
         for (let i = 0; i < (this.origGridSize * this.origGridSize); i++) {
-            t += this.tileX[i];
+            t += this.tileXY[i * 2];
             t += ",";
-            t += this.tileY[i];
+            t += this.tileXY[(i * 2) + 1];
             t += ",";
         }
         t += "0]";
@@ -166,16 +140,16 @@ class DrawingApp {
             let mouseDragXY = this.getMouseXY(e);
             let dx = mouseDragXY[0] - this.mouseDownXY[0];
             let dy = mouseDragXY[1] - this.mouseDownXY[1];
-            let i = this.mouseTile;
-            this.tileX[i] -= dx;
-            this.tileY[i] -= dy;
-            if (this.tileX[i] < 0) { this.tileX[i] = 0; }
-            if (this.tileY[i] < 0) { this.tileY[i] = 0; }
-            if (this.tileX[i] >= (this.image.width - this.origTileSize)) {
-                this.tileX[i] = this.image.width - this.origTileSize - 1;
+            let i = this.mouseTile * 2;
+            this.tileXY[i] -= dx;
+            this.tileXY[i + 1] -= dy;
+            if (this.tileXY[i] < 0) { this.tileXY[i] = 0; }
+            if (this.tileXY[i + 1] < 0) { this.tileXY[i + 1] = 0; }
+            if (this.tileXY[i] >= (this.image.width - this.origTileSize)) {
+                this.tileXY[i] = this.image.width - this.origTileSize - 1;
             }
-            if (this.tileY[i] >= (this.image.height - this.origTileSize)) {
-                this.tileY[i] = this.image.height - this.origTileSize - 1;
+            if (this.tileXY[i + 1] >= (this.image.height - this.origTileSize)) {
+                this.tileXY[i + 1] = this.image.height - this.origTileSize - 1;
             }
             this.mouseDownXY = mouseDragXY;
             this.redraw();
