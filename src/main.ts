@@ -82,6 +82,13 @@ class TileSet {
     }
 }
 
+enum TurnState {
+    AWAIT_MY_TURN,
+    PLACE_THE_TILE,
+    ROTATE_THE_TILE,
+    END_OF_GAME,
+};
+
 class GameState {
     private placed: Tile[] = [];
     private unplaced: Tile[] = [];
@@ -95,7 +102,8 @@ class GameState {
         return this.placed;
     }
 
-    public getNextTile(): Tile | null {
+    public getCurrentTile(): Tile | null {
+
         if (this.unplaced.length) {
             return this.unplaced[this.unplaced.length - 1];
         } else {
@@ -103,29 +111,34 @@ class GameState {
         }
     }
 
-    public place(pos: GridXY, rotation: number) {
-        let tile = this.unplaced[this.unplaced.length - 1];
-        this.unplaced.pop();
-        tile.pos = pos;
-        tile.rotation = rotation;
-        this.placed.push(tile);
+    public nextTile() {
+        let tile = this.getCurrentTile();
+        if (tile) {
+            this.unplaced.pop();
+            this.placed.push(tile);
+        }
     }
 
     public getTileAt(pos: GridXY): Tile | null {
         let placed = this.placed;
+        let tile = this.getCurrentTile();
+        if (tile && tile.pos && (tile.pos.x == pos.x) && (tile.pos.y == pos.y)) {
+            return tile;
+        }
         for (let i = 0; i < placed.length; i++) {
-            let tile: Tile = placed[i];
+            tile = placed[i];
             if ((tile.pos.x == pos.x) && (tile.pos.y == pos.y)) {
                 return tile;
             }
         }
+
         return null;
     }
 
     public isValidPlacement(pos: GridXY): boolean {
         let placed = this.placed;
         let nextTo = false;
-        if (this.getNextTile() == null) {
+        if (this.getCurrentTile() == null) {
             return false; // no tile to place
         }
         if (placed.length == 0) {
@@ -211,21 +224,29 @@ class GameView {
         }
     }
 
-    public drawTileAt(context: CanvasRenderingContext2D, pos: GridXY) {
+    public drawAt(context: CanvasRenderingContext2D, pos: GridXY) {
         let tile = this.gameState.getTileAt(pos);
-        let xy = this.getScreenXY(pos);
         if (tile) {
-            tile.draw(context, xy, this.drawTileSize);
+            this.drawTile(context, tile);
         } else {
+            let xy = this.getScreenXY(pos);
             context.fillStyle = this.background;
             context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
         }
     }
 
+    public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
+        let xy = this.getScreenXY(tile.pos);
+        tile.draw(context, xy, this.drawTileSize);
+    }
 
-    public highlightTileAt(context: CanvasRenderingContext2D, pos: GridXY) {
+    public drawHighlight(context: CanvasRenderingContext2D, pos: GridXY) {
+        this.drawAt(context, pos);
         let xy = this.getScreenXY(pos);
-        context.strokeRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
+        let hPad = 5;
+        let sPad = hPad * 2;
+        context.strokeRect(xy.x + hPad, xy.y + hPad,
+                           this.drawTileSize - sPad, this.drawTileSize - sPad);
     }
 
     public getGridXY(mouseX, mouseY: number): GridXY {
@@ -235,7 +256,6 @@ class GameView {
     }
 }
 
-
 class DrawingApp {
 
     private canvas: HTMLCanvasElement;
@@ -243,7 +263,9 @@ class DrawingApp {
     private tileSet: TileSet;
     private gameState: GameState;
     private gameView: GameView;
-    private mousePos: GridXY | null = null;
+    private turnState: TurnState = TurnState.PLACE_THE_TILE;
+    private undrawPos: GridXY | null = null;
+
 
     constructor() {
         let canvas = document.getElementById('canvas') as
@@ -259,8 +281,8 @@ class DrawingApp {
         this.tileSet = new TileSet();
         this.gameState = new GameState(this.tileSet);
         this.gameView = new GameView(this.gameState);
-        this.gameState.place(new GridXY(0, 0), 0);
-
+        this.gameState.getCurrentTile().pos = new GridXY(0, 0);
+        this.gameState.nextTile();
         this.createUserEvents();
         this.redraw();
     }
@@ -278,34 +300,26 @@ class DrawingApp {
         canvas.addEventListener("touchend", this.releaseEventHandler);
         canvas.addEventListener("touchcancel", this.cancelEventHandler);
 
-        canvas.addEventListener("resize", this.redraw);
-        canvas.addEventListener("scroll", this.redraw);
-        canvas.addEventListener("load", this.redraw);
+        window.addEventListener("resize", this.redraw, false);
     }
 
     private redraw() {
         let context = this.context;
         let canvas = this.canvas;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         this.gameView.computeScale(canvas.width, canvas.height);
         this.gameView.drawAll(context);
+        this.undrawPos = null;
     }
 
     private releaseEventHandler = () => {
-        if (this.mousePos) {
-            if (this.gameState.isValidPlacement(this.mousePos)) {
-                this.gameState.place(this.mousePos, 0);
-                this.gameView.computeBounds();
-                this.redraw();
-            }
-        }
-        this.mousePos = null;
     }
 
     private cancelEventHandler = () => {
-        this.mousePos = null;
     }
 
-    private setMousePos(e: MouseEvent | TouchEvent) {
+    private getMousePos(e: MouseEvent | TouchEvent): GridXY {
         let mouseX = (e as TouchEvent).changedTouches ?
                      (e as TouchEvent).changedTouches[0].pageX :
                      (e as MouseEvent).pageX;
@@ -314,19 +328,76 @@ class DrawingApp {
                      (e as MouseEvent).pageY;
         mouseX -= this.canvas.offsetLeft;
         mouseY -= this.canvas.offsetTop;
-        this.mousePos = this.gameView.getGridXY(mouseX, mouseY);
+        return this.gameView.getGridXY(mouseX, mouseY);
     }
 
     private pressEventHandler = (e: MouseEvent | TouchEvent) => {
-        this.setMousePos(e);
+        let pos = this.getMousePos(e);
+        let tile = this.gameState.getCurrentTile();
+        switch (this.turnState) {
+            case TurnState.PLACE_THE_TILE:
+                if (tile && this.gameState.isValidPlacement(pos)) {
+                    tile.pos = pos;
+                    this.gameView.drawTile(this.context, tile);
+                    this.turnState = TurnState.ROTATE_THE_TILE;
+                }
+                break;
+            case TurnState.ROTATE_THE_TILE:
+                if (tile) {
+                    if (pos == tile.pos) {
+                        tile.rotation = (tile.rotation + 1) % 4;
+                        this.gameView.drawTile(this.context, tile);
+                    } else {
+                        this.gameView.computeBounds();
+                        this.redraw();
+                        this.gameState.nextTile();
+                        tile = this.gameState.getCurrentTile();
+                        if (tile) {
+                            this.turnState = TurnState.PLACE_THE_TILE;
+                        } else {
+                            this.turnState = TurnState.END_OF_GAME;
+                        }
+                    }
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private dragEventHandler = (e: MouseEvent | TouchEvent) => {
-        this.setMousePos(e);
+        if (this.undrawPos) {
+            this.gameView.drawAt(this.context, this.undrawPos);
+        }
+        let pos = this.getMousePos(e);
+        let tile = this.gameState.getCurrentTile();
+        switch (this.turnState) {
+            case TurnState.PLACE_THE_TILE:
+                if (tile && this.gameState.isValidPlacement(pos)) {
+                    this.context.strokeStyle = "white";
+                } else {
+                    this.context.strokeStyle = "red";
+                }
+            case TurnState.ROTATE_THE_TILE:
+                if (tile) {
+                    if (pos == tile.pos) {
+                        this.context.strokeStyle = "yellow";
+                    } else {
+                        this.context.strokeStyle = "green";
+                    }
+                }
+            default:
+                this.context.strokeStyle = "red";
+                break;
+        }
+        this.gameView.drawHighlight(this.context, pos);
+        this.undrawPos = pos;
         e.preventDefault();
     }
 
 
 }
 
-new DrawingApp();
+function start() {
+    new DrawingApp();
+}
