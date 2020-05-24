@@ -48,10 +48,17 @@ class Tile {
                 destXY: ScreenXY,
                 drawTileSize: number) {
 
+        let half = drawTileSize * 0.5;
+        context.save();
+        context.translate(destXY.x + half, destXY.y + half);
+        if (this.rotation) {
+            context.rotate(this.rotation * Math.PI * 0.5);
+        }
         context.drawImage(this.image,
                           this.imageXY.x, this.imageXY.y,
                           this.imageTileSize, this.imageTileSize,
-                          destXY.x, destXY.y, drawTileSize, drawTileSize);
+                          -half, -half, drawTileSize, drawTileSize);
+        context.restore();
     }
 }
 
@@ -214,13 +221,17 @@ class GameView {
                             this.origin.y + (this.drawTileSize * pos.y));
     }
 
+    public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
+        let xy = this.getScreenXY(tile.pos);
+        tile.draw(context, xy, this.drawTileSize);
+    }
+
     public drawAll(context: CanvasRenderingContext2D) {
         let placed = this.gameState.getPlacedTiles();
         context.fillStyle = this.background;
         context.fillRect(0, 0, this.size.x, this.size.y);
         for (let i = 0; i < placed.length; i++) {
-            let tile: Tile = placed[i];
-            tile.draw(context, this.getScreenXY(tile.pos), this.drawTileSize);
+            this.drawTile(context, placed[i]);
         }
     }
 
@@ -233,11 +244,6 @@ class GameView {
             context.fillStyle = this.background;
             context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
         }
-    }
-
-    public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
-        let xy = this.getScreenXY(tile.pos);
-        tile.draw(context, xy, this.drawTileSize);
     }
 
     public drawHighlight(context: CanvasRenderingContext2D, pos: GridXY) {
@@ -344,20 +350,20 @@ class DrawingApp {
                 break;
             case TurnState.ROTATE_THE_TILE:
                 if (tile) {
-                    if (pos == tile.pos) {
+                    //if (pos == tile.pos) {
                         tile.rotation = (tile.rotation + 1) % 4;
                         this.gameView.drawTile(this.context, tile);
-                    } else {
-                        this.gameView.computeBounds();
-                        this.redraw();
-                        this.gameState.nextTile();
-                        tile = this.gameState.getCurrentTile();
-                        if (tile) {
-                            this.turnState = TurnState.PLACE_THE_TILE;
-                        } else {
-                            this.turnState = TurnState.END_OF_GAME;
-                        }
-                    }
+//                  } else {
+//                      this.gameView.computeBounds();
+//                      this.redraw();
+//                      this.gameState.nextTile();
+//                      tile = this.gameState.getCurrentTile();
+//                      if (tile) {
+//                          this.turnState = TurnState.PLACE_THE_TILE;
+//                      } else {
+//                          this.turnState = TurnState.END_OF_GAME;
+//                      }
+//                  }
                 }
                 break;
             default:
