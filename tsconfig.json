@@ -4,6 +4,7 @@
         "outDir": "dist",
         "target": "es5",
         "sourceMap": true,
+        "strict": true,
         "lib": [
             "es5",
             "dom"

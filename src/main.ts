@@ -134,7 +134,7 @@ class GameState {
         }
         for (let i = 0; i < placed.length; i++) {
             tile = placed[i];
-            if ((tile.pos.x == pos.x) && (tile.pos.y == pos.y)) {
+            if (tile.pos && (tile.pos.x == pos.x) && (tile.pos.y == pos.y)) {
                 return tile;
             }
         }
@@ -154,7 +154,7 @@ class GameState {
         }
         for (let i = 0; i < placed.length; i++) {
             let tile: Tile = placed[i];
-            if (tile.pos.x == pos.x) {
+            if (tile.pos && tile.pos.x == pos.x) {
                 if (tile.pos.y == pos.y) {
                     return false; // tile already placed there
                 } else if (tile.pos.y == (pos.y - 1)) {
@@ -162,7 +162,7 @@ class GameState {
                 } else if (tile.pos.y == (pos.y + 1)) {
                     nextTo = true;
                 }
-            } else if (tile.pos.y == pos.y) {
+            } else if (tile.pos && tile.pos.y == pos.y) {
                 if (tile.pos.x == (pos.x - 1)) {
                     nextTo = true;
                 } else if (tile.pos.x == (pos.x + 1)) {
@@ -175,17 +175,16 @@ class GameState {
 }
 
 class GameView {
-    private gameState: GameState = null;
-    private min: GridXY;
-    private max: GridXY;
-    private drawTileSize: number;
-    private origin: ScreenXY;
-    private size: ScreenXY;
-    public background: string = "brown";
+    private gameState: GameState;
+    private min: GridXY = new GridXY(0, 0);
+    private max: GridXY = new GridXY(0, 0);
+    private drawTileSize: number = 0;
+    private origin: ScreenXY = new ScreenXY(0, 0);
+    private size: ScreenXY = new ScreenXY(0, 0);
+    private background: string = "brown";
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
-        this.computeBounds();
         this.computeScale(100.0, 100.0);
     }
     
@@ -206,6 +205,7 @@ class GameView {
 
     public computeScale(width: number, height: number) {
 
+        this.computeBounds();
         this.size = new ScreenXY(width, height);
         let gridWidth = 1 + this.max.x - this.min.x;
         let gridHeight = 1 + this.max.y - this.min.y;
@@ -216,20 +216,32 @@ class GameView {
                                    (height * 0.5) - (this.drawTileSize * 0.5));
     }
 
-    public getScreenXY(pos: GridXY) : ScreenXY {
+    public getScreenXY(pos: GridXY): ScreenXY {
         return new ScreenXY(this.origin.x + (this.drawTileSize * pos.x),
                             this.origin.y + (this.drawTileSize * pos.y));
     }
 
+    public getDrawTileSize(): number {
+        return this.drawTileSize;
+    }
+
     public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
-        let xy = this.getScreenXY(tile.pos);
-        tile.draw(context, xy, this.drawTileSize);
+        if (tile.pos) {
+            let xy = this.getScreenXY(tile.pos);
+            tile.draw(context, xy, this.drawTileSize);
+        }
     }
 
     public drawAll(context: CanvasRenderingContext2D) {
-        let placed = this.gameState.getPlacedTiles();
         context.fillStyle = this.background;
         context.fillRect(0, 0, this.size.x, this.size.y);
+
+        let tile = this.gameState.getCurrentTile();
+        if (tile) {
+            this.drawTile(context, tile);
+        }
+
+        let placed = this.gameState.getPlacedTiles();
         for (let i = 0; i < placed.length; i++) {
             this.drawTile(context, placed[i]);
         }
@@ -255,12 +267,93 @@ class GameView {
                            this.drawTileSize - sPad, this.drawTileSize - sPad);
     }
 
-    public getGridXY(mouseX, mouseY: number): GridXY {
-        return new GridXY(Math.floor((mouseX - this.origin.x) / this.drawTileSize),
-                          Math.floor((mouseY - this.origin.y) / this.drawTileSize));
+    public getGridXY(xy: ScreenXY): GridXY {
+        return new GridXY(Math.floor((xy.x - this.origin.x) / this.drawTileSize),
+                          Math.floor((xy.y - this.origin.y) / this.drawTileSize));
 
     }
 }
+
+class FloatingButton {
+
+    private image: HTMLImageElement;
+    private gameView: GameView;
+    private topLeft: ScreenXY | null = null;
+    private bottomRight: ScreenXY | null = null;
+    private hAlign: number = 0;
+    private vAlign: number = 0;
+
+    constructor(src: string, gameView: GameView, hAlign: number, vAlign: number) {
+        this.image = new Image();
+        this.image.src = src;
+        this.gameView = gameView;
+        this.hAlign = hAlign;
+        this.vAlign = vAlign;
+    }
+
+    public setPosition(tile: Tile) {
+        if ((!tile) || (!tile.pos)) {
+            this.remove();
+            return;
+        }
+        let xy = this.gameView.getScreenXY(tile.pos);
+        let drawTileSize = this.gameView.getDrawTileSize();
+        let half = drawTileSize * 0.5;
+        let quarter = half * 0.5;
+        // go to middle of tile
+        xy.x += half;
+        xy.y += half;
+        // go to middle of button
+        xy.x += drawTileSize * this.hAlign;
+        xy.y += drawTileSize * this.vAlign;
+        // go to top left of button
+        xy.x -= quarter;
+        xy.y -= quarter;
+        // set button size and position
+        this.topLeft = xy;
+        this.bottomRight = new ScreenXY(xy.x + half, xy.y + half);
+    }
+
+    public remove() {
+        this.topLeft = null;
+        this.bottomRight = null;
+    }
+
+    public intersect(xy: ScreenXY): boolean {
+        if (this.topLeft && this.bottomRight) {
+            return (xy.x >= this.topLeft.x)
+                && (xy.x < this.bottomRight.x)
+                && (xy.y >= this.topLeft.y)
+                && (xy.y < this.bottomRight.y);
+        }
+        return false;
+    }
+
+    public draw(context: CanvasRenderingContext2D, mouseXY: ScreenXY) {
+        let xy = this.topLeft;
+        if (xy && this.bottomRight) {
+            let destWidth = this.bottomRight.x - xy.x;
+            let destHeight = this.bottomRight.y - xy.y;
+
+            context.fillStyle = 'gray';
+            context.fillRect(xy.x + 5, xy.y + 5, destWidth, destHeight);
+            context.fillStyle = 'white';
+            context.fillRect(xy.x, xy.y, destWidth, destHeight);
+            context.drawImage(this.image,
+                              0, 0,
+                              this.image.width, this.image.height,
+                              xy.x, xy.y,
+                              destWidth, destHeight);
+            if (this.intersect(mouseXY)) {
+                context.strokeStyle = 'white';
+            } else {
+                context.strokeStyle = 'black';
+            }
+            context.strokeRect(xy.x, xy.y, destWidth, destHeight);
+        }
+    }
+}
+
 
 class DrawingApp {
 
@@ -271,12 +364,14 @@ class DrawingApp {
     private gameView: GameView;
     private turnState: TurnState = TurnState.PLACE_THE_TILE;
     private undrawPos: GridXY | null = null;
+    private acceptButton: FloatingButton;
+    private rotateButton: FloatingButton;
+    private cancelButton: FloatingButton;
 
 
     constructor() {
-        let canvas = document.getElementById('canvas') as
-                     HTMLCanvasElement;
-        let context = canvas.getContext("2d");
+        let canvas = document.getElementById('canvas') as HTMLCanvasElement;
+        let context = canvas.getContext("2d") as CanvasRenderingContext2D;
         context.lineCap = 'round';
         context.lineJoin = 'round';
         context.strokeStyle = 'black';
@@ -287,8 +382,16 @@ class DrawingApp {
         this.tileSet = new TileSet();
         this.gameState = new GameState(this.tileSet);
         this.gameView = new GameView(this.gameState);
-        this.gameState.getCurrentTile().pos = new GridXY(0, 0);
+        let firstTile = this.gameState.getCurrentTile();
+        if (firstTile) {
+            firstTile.pos = new GridXY(0, 0);
+        }
         this.gameState.nextTile();
+
+        this.acceptButton = new FloatingButton("accept.png", this.gameView, -1, 1);
+        this.rotateButton = new FloatingButton("rotate.png", this.gameView, 0, 1);
+        this.cancelButton = new FloatingButton("cancel.png", this.gameView, 1, 1);
+
         this.createUserEvents();
         this.redraw();
     }
@@ -296,17 +399,13 @@ class DrawingApp {
     private createUserEvents() {
         let canvas = this.canvas;
 
-        canvas.addEventListener("mousedown", this.pressEventHandler);
-        canvas.addEventListener("mousemove", this.dragEventHandler);
-        canvas.addEventListener("mouseup", this.releaseEventHandler);
-        canvas.addEventListener("mouseout", this.cancelEventHandler);
+        canvas.addEventListener("mousedown", (e: MouseEvent) => this.pressEventHandler(e));
+        canvas.addEventListener("mousemove", (e: MouseEvent) => this.dragEventHandler(e));
 
-        canvas.addEventListener("touchstart", this.pressEventHandler);
-        canvas.addEventListener("touchmove", this.dragEventHandler);
-        canvas.addEventListener("touchend", this.releaseEventHandler);
-        canvas.addEventListener("touchcancel", this.cancelEventHandler);
+        canvas.addEventListener("touchstart", (e: TouchEvent) => this.pressEventHandler(e));
+        canvas.addEventListener("touchmove", (e: TouchEvent) => this.dragEventHandler(e));
 
-        window.addEventListener("resize", this.redraw, false);
+        window.addEventListener("resize", () => this.redraw(), false);
     }
 
     private redraw() {
@@ -317,15 +416,33 @@ class DrawingApp {
         this.gameView.computeScale(canvas.width, canvas.height);
         this.gameView.drawAll(context);
         this.undrawPos = null;
+        this.drawButtons(new ScreenXY(-100, -100));
     }
 
-    private releaseEventHandler = () => {
+    private drawButtons(mouseXY: ScreenXY) {
+        let context = this.context;
+        let tile = this.gameState.getCurrentTile();
+
+        switch (this.turnState) {
+            case TurnState.ROTATE_THE_TILE:
+                if (tile) {
+                    this.rotateButton.setPosition(tile);
+                    this.acceptButton.setPosition(tile);
+                    this.cancelButton.setPosition(tile);
+                }
+                this.rotateButton.draw(context, mouseXY);
+                this.acceptButton.draw(context, mouseXY);
+                this.cancelButton.draw(context, mouseXY);
+                break;
+            default:
+                this.rotateButton.remove();
+                this.acceptButton.remove();
+                this.cancelButton.remove();
+                break;
+        }
     }
 
-    private cancelEventHandler = () => {
-    }
-
-    private getMousePos(e: MouseEvent | TouchEvent): GridXY {
+    private getMousePos(e: MouseEvent | TouchEvent): ScreenXY {
         let mouseX = (e as TouchEvent).changedTouches ?
                      (e as TouchEvent).changedTouches[0].pageX :
                      (e as MouseEvent).pageX;
@@ -334,36 +451,41 @@ class DrawingApp {
                      (e as MouseEvent).pageY;
         mouseX -= this.canvas.offsetLeft;
         mouseY -= this.canvas.offsetTop;
-        return this.gameView.getGridXY(mouseX, mouseY);
+        return new ScreenXY(mouseX, mouseY);
     }
 
-    private pressEventHandler = (e: MouseEvent | TouchEvent) => {
-        let pos = this.getMousePos(e);
+    private pressEventHandler(e: MouseEvent | TouchEvent) {
+        let xy = this.getMousePos(e);
+        let pos = this.gameView.getGridXY(xy);
         let tile = this.gameState.getCurrentTile();
+
         switch (this.turnState) {
             case TurnState.PLACE_THE_TILE:
                 if (tile && this.gameState.isValidPlacement(pos)) {
                     tile.pos = pos;
-                    this.gameView.drawTile(this.context, tile);
                     this.turnState = TurnState.ROTATE_THE_TILE;
+                    this.redraw();
                 }
                 break;
             case TurnState.ROTATE_THE_TILE:
-                if (tile) {
-                    //if (pos == tile.pos) {
-                        tile.rotation = (tile.rotation + 1) % 4;
-                        this.gameView.drawTile(this.context, tile);
-//                  } else {
-//                      this.gameView.computeBounds();
-//                      this.redraw();
-//                      this.gameState.nextTile();
-//                      tile = this.gameState.getCurrentTile();
-//                      if (tile) {
-//                          this.turnState = TurnState.PLACE_THE_TILE;
-//                      } else {
-//                          this.turnState = TurnState.END_OF_GAME;
-//                      }
-//                  }
+                if (tile && this.rotateButton.intersect(xy)) {
+                    tile.rotation = (tile.rotation + 1) % 4;
+                    this.redraw();
+                } else if (tile && this.acceptButton.intersect(xy)) {
+                    // finish placing
+                    this.gameState.nextTile();
+                    this.redraw();
+                    tile = this.gameState.getCurrentTile();
+                    if (tile) {
+                        this.turnState = TurnState.PLACE_THE_TILE;
+                    } else {
+                        this.turnState = TurnState.END_OF_GAME;
+                    }
+                } else if (tile && this.cancelButton.intersect(xy)) {
+                    // unplace tile
+                    tile.pos = null;
+                    this.turnState = TurnState.PLACE_THE_TILE;
+                    this.redraw();
                 }
                 break;
             default:
@@ -371,12 +493,14 @@ class DrawingApp {
         }
     }
 
-    private dragEventHandler = (e: MouseEvent | TouchEvent) => {
+    private dragEventHandler(e: MouseEvent | TouchEvent) {
         if (this.undrawPos) {
             this.gameView.drawAt(this.context, this.undrawPos);
         }
-        let pos = this.getMousePos(e);
+        let xy = this.getMousePos(e);
+        let pos = this.gameView.getGridXY(xy);
         let tile = this.gameState.getCurrentTile();
+        this.gameView.drawAt(this.context, pos);
         switch (this.turnState) {
             case TurnState.PLACE_THE_TILE:
                 if (tile && this.gameState.isValidPlacement(pos)) {
@@ -384,20 +508,19 @@ class DrawingApp {
                 } else {
                     this.context.strokeStyle = "red";
                 }
+                this.gameView.drawHighlight(this.context, pos);
+                break;
             case TurnState.ROTATE_THE_TILE:
-                if (tile) {
-                    if (pos == tile.pos) {
-                        this.context.strokeStyle = "yellow";
-                    } else {
-                        this.context.strokeStyle = "green";
-                    }
+                if (tile && tile.pos) {
+                    this.context.strokeStyle = "yellow";
+                    this.gameView.drawHighlight(this.context, tile.pos);
                 }
+                break;
             default:
-                this.context.strokeStyle = "red";
                 break;
         }
-        this.gameView.drawHighlight(this.context, pos);
         this.undrawPos = pos;
+        this.drawButtons(xy);
         e.preventDefault();
     }
 
