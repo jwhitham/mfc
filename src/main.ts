@@ -1,34 +1,6 @@
 
-class GridXY {
-    public x: number = 0;
-    public y: number = 0;
 
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
-class ScreenXY {
-    public x: number = 0;
-    public y: number = 0;
-
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
-class ImageXY {
-    public x: number = 0;
-    public y: number = 0;
-
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
+import { GridXY, ScreenXY, ImageXY } from "./xy";
 
 class Tile {
     public pos: GridXY | null = null;
@@ -195,8 +167,8 @@ class GameView {
         for (let i = 0; i < placed.length; i++) {
             let tile: Tile = placed[i];
             if (tile.pos) {
-                this.min.x = Math.min(this.min.x, tile.pos.x - 1);
-                this.min.y = Math.min(this.min.y, tile.pos.y - 1);
+                this.min.x = Math.min(this.min.x, tile.pos.x - 2);
+                this.min.y = Math.min(this.min.y, tile.pos.y - 2);
                 this.max.x = Math.max(this.max.x, tile.pos.x + 1);
                 this.max.y = Math.max(this.max.y, tile.pos.y + 1);
             }
@@ -527,6 +499,6 @@ class DrawingApp {
 
 }
 
-function start() {
+export function start(): void {
     new DrawingApp();
 }

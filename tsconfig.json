@@ -2,14 +2,20 @@
     "compilerOptions": {
         "rootDir": "src",
         "outDir": "dist",
-        "target": "es5",
+        "target": "es3",
+        "module": "es2015",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "allowSyntheticDefaultImports": true,
+        "removeComments": true,
         "sourceMap": true,
         "strict": true,
         "lib": [
             "es5",
             "dom"
         ],
-        "noUnusedLocals": true,
-        "module": "commonjs"
+        "noUnusedLocals": true
     }
 }
