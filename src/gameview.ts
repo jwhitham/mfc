@@ -3,24 +3,27 @@ import { GridXY, ScreenXY } from "./xy";
 import { Tile } from "./tile";
 import { GameState } from "./gamestate";
 
+const background: string = "brown";
+const initial = 3;
+
 export class GameView {
     private gameState: GameState;
     private min: GridXY = new GridXY(0, 0);
     private max: GridXY = new GridXY(0, 0);
     private drawTileSize: number = 0;
     private topLeft: ScreenXY = new ScreenXY(0, 0);
-    private size: ScreenXY = new ScreenXY(100, 100);
-    private background: string = "brown";
+    private size: ScreenXY;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
-        this.computeScale(100.0, 100.0);
+        this.size = new ScreenXY(100, 100);
+        this.computeScale(this.size.x, this.size.y);
     }
     
     private computeBounds() {
         let placed = this.gameState.getPlacedTiles();
-        this.min = new GridXY(-3, -3);
-        this.max = new GridXY(3, 3);
+        this.min = new GridXY(-initial, -initial);
+        this.max = new GridXY(initial, initial);
         for (let i = 0; i < placed.length; i++) {
             let tile: Tile = placed[i];
             if (tile.pos) {
@@ -76,7 +79,7 @@ export class GameView {
     }
 
     public drawAll(context: CanvasRenderingContext2D) {
-        context.fillStyle = this.background;
+        context.fillStyle = background;
         context.fillRect(0, 0, this.size.x, this.size.y);
 
         let tile = this.gameState.getCurrentTile();
@@ -96,7 +99,7 @@ export class GameView {
             this.drawTile(context, tile);
         } else {
             let xy = this.getScreenXY(pos);
-            context.fillStyle = this.background;
+            context.fillStyle = background;
             context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
         }
     }
