@@ -8,8 +8,8 @@ export class GameView {
     private min: GridXY = new GridXY(0, 0);
     private max: GridXY = new GridXY(0, 0);
     private drawTileSize: number = 0;
-    private origin: ScreenXY = new ScreenXY(0, 0);
-    private size: ScreenXY = new ScreenXY(0, 0);
+    private topLeft: ScreenXY = new ScreenXY(0, 0);
+    private size: ScreenXY = new ScreenXY(100, 100);
     private background: string = "brown";
 
     constructor(gameState: GameState) {
@@ -17,37 +17,51 @@ export class GameView {
         this.computeScale(100.0, 100.0);
     }
     
-    public computeBounds() {
+    private computeBounds() {
         let placed = this.gameState.getPlacedTiles();
         this.min = new GridXY(-3, -3);
         this.max = new GridXY(3, 3);
         for (let i = 0; i < placed.length; i++) {
             let tile: Tile = placed[i];
             if (tile.pos) {
-                this.min.x = Math.min(this.min.x, tile.pos.x);
-                this.min.y = Math.min(this.min.y, tile.pos.y);
-                this.max.x = Math.max(this.max.x, tile.pos.x);
-                this.max.y = Math.max(this.max.y, tile.pos.y);
+                this.min.x = Math.min(this.min.x, tile.pos.x - 1);
+                this.min.y = Math.min(this.min.y, tile.pos.y - 1);
+                this.max.x = Math.max(this.max.x, tile.pos.x + 2);
+                this.max.y = Math.max(this.max.y, tile.pos.y + 2);
             }
         }
     }
 
     public computeScale(width: number, height: number) {
 
-        this.computeBounds();
+        // size is used for the background
         this.size = new ScreenXY(width, height);
-        let gridWidth = 3 + this.max.x - this.min.x;
-        let gridHeight = 3 + this.max.y - this.min.y;
+
+        // here we find out how many tiles should be shown
+        this.computeBounds();
+        let gridWidth = 1 + this.max.x - this.min.x;
+        let gridHeight = 1 + this.max.y - this.min.y;
+
+        // get the maximum possible tile size that still fits all tiles on screen
         let fitX = (width * 0.98) / gridWidth;
         let fitY = (height * 0.98) / gridHeight;
         this.drawTileSize = Math.max(Math.min(fitX, fitY), 1.0);
-        this.origin = new ScreenXY((width * 0.5) - (this.drawTileSize * 0.5),
-                                   (height * 0.5) - (this.drawTileSize * 0.5));
+
+        // where are the corners?
+        let tileWidth = this.drawTileSize * gridWidth;
+        let tileHeight = this.drawTileSize * gridHeight;
+        this.topLeft = new ScreenXY((width - tileWidth) * 0.5, (height - tileHeight) * 0.5);
     }
 
     public getScreenXY(pos: GridXY): ScreenXY {
-        return new ScreenXY(this.origin.x + (this.drawTileSize * pos.x),
-                            this.origin.y + (this.drawTileSize * pos.y));
+        return new ScreenXY(this.topLeft.x + (this.drawTileSize * (pos.x - this.min.x)),
+                            this.topLeft.y + (this.drawTileSize * (pos.y - this.min.y)));
+    }
+
+    public getGridXY(xy: ScreenXY): GridXY {
+        return new GridXY(Math.floor((xy.x - this.topLeft.x) / this.drawTileSize) + this.min.x,
+                          Math.floor((xy.y - this.topLeft.y) / this.drawTileSize) + this.min.y);
+
     }
 
     public getDrawTileSize(): number {
@@ -94,12 +108,6 @@ export class GameView {
         let sPad = hPad * 2;
         context.strokeRect(xy.x + hPad, xy.y + hPad,
                            this.drawTileSize - sPad, this.drawTileSize - sPad);
-    }
-
-    public getGridXY(xy: ScreenXY): GridXY {
-        return new GridXY(Math.floor((xy.x - this.origin.x) / this.drawTileSize),
-                          Math.floor((xy.y - this.origin.y) / this.drawTileSize));
-
     }
 }
 
