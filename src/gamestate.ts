@@ -1,6 +1,7 @@
 
 import { GridXY } from "./xy";
-import { Tile, TileSet } from "./tile";
+import { Tile } from "./tile";
+import { TileSet } from "./tileset";
 
 export class GameState {
     private placed: Tile[] = [];

@@ -1,6 +1,6 @@
 
 import { GridXY, ScreenXY } from "./xy";
-import { TileSet } from "./tile";
+import { TileSet } from "./tileset";
 import { GameState } from "./gamestate";
 import { GameView } from "./gameview";
 import { FloatingButton } from "./floatingbutton";

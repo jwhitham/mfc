@@ -26,7 +26,7 @@ export class GameView {
             if (tile.pos) {
                 this.min.x = Math.min(this.min.x, tile.pos.x - 1);
                 this.min.y = Math.min(this.min.y, tile.pos.y - 1);
-                this.max.x = Math.max(this.max.x, tile.pos.x + 2);
+                this.max.x = Math.max(this.max.x, tile.pos.x + 1);
                 this.max.y = Math.max(this.max.y, tile.pos.y + 2);
             }
         }
