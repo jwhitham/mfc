@@ -1,5 +1,6 @@
 
 import { GridXY, ScreenXY, ImageXY } from "./xy";
+import { Roadmap } from "./roadmap";
 
 export class Tile {
     public pos: GridXY | null = null;
@@ -7,12 +8,19 @@ export class Tile {
     private imageXY: ImageXY;
     private imageTileSize: number = 0;
     private image: HTMLImageElement;
+    private roadmap: Roadmap;
 
     constructor(image: HTMLImageElement,
-                imageXY: ImageXY, imageTileSize: number) {
+                imageXY: ImageXY, imageTileSize: number,
+                roadmap: Roadmap) {
         this.image = image;
         this.imageXY = imageXY;
         this.imageTileSize = imageTileSize;
+        this.roadmap = roadmap;
+    }
+
+    public getRoadmap(): Roadmap {
+        return this.roadmap;
     }
 
     public draw(context: CanvasRenderingContext2D,
