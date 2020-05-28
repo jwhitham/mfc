@@ -35,8 +35,7 @@ export class TileSet {
         let allTiles: Tile[] = [];
         for (let i = 0; i < (gridSize * gridSize); i++) {
             let xy = new ImageXY(tileXY[i * 2], tileXY[(i * 2) + 1]);
-            allTiles.push(new Tile(this.image, xy, tileSize,
-                                   new Roadmap(roadmap[i])));
+            allTiles.push(new Tile(this.image, xy, tileSize, new Roadmap(roadmap[i])));
         }
         return allTiles;
     }

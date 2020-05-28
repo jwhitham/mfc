@@ -1,16 +1,83 @@
 
-export enum Direction { NORTH, EAST, SOUTH, WEST };
+export enum Direction { NORTH, EAST, SOUTH, WEST, END };
 export enum Player { RED, YELLOW, GREEN, BLUE };
 
 export class Road {
-    public d1: Direction;
-    public d2: Direction;
-    public meeples: Player[];
+    private d1: Direction;
+    private d2: Direction;
+    private meeples: Player[];
+    private connected: Road[] = [];
+    private isEnd: boolean = false;
+    private isFinished: boolean = false;
+    private isVisited: boolean = false;
 
     constructor(d1: Direction, d2: Direction, meeples: Player[]) {
         this.d1 = d1;
         this.d2 = d2;
         this.meeples = meeples;
+        this.isEnd = this.hasDirection(Direction.END);
+    }
+
+    public hasDirection(d: Direction): boolean {
+        return (this.d1 == d) || (this.d2 == d);
+    }
+
+    public connect(anotherRoad: Road) {
+        this.connected.push(anotherRoad);
+        if (this.isEnd) {
+            if (this.connected.length == 1) {
+                this.isFinished = true;
+            }
+        } else {
+            if (this.connected.length == 2) {
+                this.isFinished = true;
+            }
+        }
+    }
+
+    private visit(callback: (r: Road) => void) {
+        this.isVisited = true;
+        callback(this);
+        for (let i = 0; i < this.connected.length; i++) {
+            let r = this.connected[i];
+            if (!r.isVisited) {
+                r.visit(callback);
+            }
+        }
+    }
+
+    private clear() {
+        this.isVisited = false;
+        for (let i = 0; i < this.connected.length; i++) {
+            let r = this.connected[i];
+            if (r.isVisited) {
+                r.clear();
+            }
+        }
+    }
+
+    public isComplete(): boolean {
+        let complete = true;
+        this.visit((r: Road) => {
+            if (!r.isFinished) {
+                complete = false;
+            }
+        });
+        this.clear();
+        return complete;
+    }
+
+    public getScore(colour: Player): number {
+        let score = 0;
+        this.visit((r: Road) => {
+            for (let i = 0; i < r.meeples.length; i++) {
+                if (colour == r.meeples[i]) {
+                    score ++;
+                }
+            }
+        });
+        this.clear();
+        return score;
     }
 }
 
@@ -51,6 +118,10 @@ export class Roadmap {
             }
         }
         this.addRoad(directions, meeples);
+        this.addEnd(Direction.NORTH);
+        this.addEnd(Direction.EAST);
+        this.addEnd(Direction.SOUTH);
+        this.addEnd(Direction.WEST);
     }
 
     private addRoad(directions: Direction[], meeples: Player[]) {
@@ -63,28 +134,39 @@ export class Roadmap {
         this.roads.push(new Road(directions[0], directions[1], meeples));
     }
 
-    public getRoads(): Road[] {
-        return this.roads;
+    private addEnd(direction: Direction) {
+        if (this.getRoad(direction) == null) {
+            this.roads.push(new Road(direction, Direction.END, []));
+        }
     }
 
-    public link(direction: Direction, target: Roadmap) {
-        switch (direction) {
-            case Direction.NORTH: opposite = Direction.SOUTH; break;
-            case Direction.SOUTH: opposite = Direction.NORTH; break;
-        }
+    public getRoad(direction: Direction): Road {
         for (let i = 0; i < this.roads.length; i++) {
-            let sourceRoad = this.roads[i];
-            if ((sourceRoad.d1 == direction) || (sourceRoad.d2 == direction)) {
-                // there's a road to the target tile
-                for (let j = 0; j < target.roads.length; j++) {
-                    let targetRoad = this.roads[i];
-                    if ((targetRoad.d1 == opposite) || (targetRoad.d2 == opposite)) {
-                        // there's a road from the target tile
-                    }
-                }
-
+            let r = this.roads[i];
+            if (r.hasDirection(direction)) {
+                return r;
             }
         }
+        throw "unable to get road for direction";
+    }
+
+    public link(toTarget: Direction, target: Roadmap): Road {
+
+        let source = this;
+        let toSource = Direction.NORTH;
+        switch (toTarget) {
+            case Direction.NORTH: toSource = Direction.SOUTH; break;
+            case Direction.SOUTH: toSource = Direction.NORTH; break;
+            case Direction.WEST:  toSource = Direction.EAST; break;
+            case Direction.EAST:  toSource = Direction.WEST; break;
+            default:              throw "invalid direction"; break;
+        }
+
+        let sourceRoad = source.getRoad(toTarget);
+        let targetRoad = target.getRoad(toSource);
+
+        sourceRoad.connect(targetRoad);
+        return sourceRoad;
     }
 
 }
