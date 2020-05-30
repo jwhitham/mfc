@@ -1,7 +1,6 @@
 
 import { ImageXY } from "./xy";
 import { Tile } from "./tile";
-import { Roadmap } from "./roadmap";
 
 const gridSize = 6;               // "mfc_tiles.jpg" is a 6x6 grid
 const tileSize = 310;             // each tile is roughly 310x310 pixels
@@ -35,7 +34,7 @@ export class TileSet {
         let allTiles: Tile[] = [];
         for (let i = 0; i < (gridSize * gridSize); i++) {
             let xy = new ImageXY(tileXY[i * 2], tileXY[(i * 2) + 1]);
-            allTiles.push(new Tile(this.image, xy, tileSize, new Roadmap(roadmap[i])));
+            allTiles.push(new Tile(this.image, xy, tileSize, roadmap[i]));
         }
         return allTiles;
     }

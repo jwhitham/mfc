@@ -23,11 +23,16 @@ export class FloatingButton {
     }
 
     public setPosition(tile: Tile) {
-        if ((!tile) || (!tile.pos)) {
+        if (!tile) {
             this.remove();
             return;
         }
-        let xy = this.gameView.getScreenXY(tile.pos);
+        let tpos = tile.getPosition();
+        if (!tpos) {
+            this.remove();
+            return;
+        }
+        let xy = this.gameView.getScreenXY(tpos);
         let drawTileSize = this.gameView.getDrawTileSize();
         let half = drawTileSize * 0.5;
         let quarter = half * 0.5;

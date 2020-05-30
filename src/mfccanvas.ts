@@ -42,7 +42,7 @@ export class MFCCanvas {
         this.gameView = new GameView(this.gameState);
         let firstTile = this.gameState.getCurrentTile();
         if (firstTile) {
-            firstTile.pos = new GridXY(0, 0);
+            firstTile.setPosition(new GridXY(0, 0));
         }
         this.gameState.nextTile();
 
@@ -120,14 +120,14 @@ export class MFCCanvas {
         switch (this.turnState) {
             case TurnState.PLACE_THE_TILE:
                 if (tile && this.gameState.isValidPlacement(pos)) {
-                    tile.pos = pos;
+                    tile.setPosition(pos);
                     this.turnState = TurnState.ROTATE_THE_TILE;
                     this.redraw();
                 }
                 break;
             case TurnState.ROTATE_THE_TILE:
                 if (tile && this.rotateButton.intersect(xy)) {
-                    tile.rotation = (tile.rotation + 1) % 4;
+                    tile.rotate();
                     this.redraw();
                 } else if (tile && this.acceptButton.intersect(xy)) {
                     // finish placing
@@ -141,7 +141,7 @@ export class MFCCanvas {
                     }
                 } else if (tile && this.cancelButton.intersect(xy)) {
                     // unplace tile
-                    tile.pos = null;
+                    tile.setPosition(null);
                     this.turnState = TurnState.PLACE_THE_TILE;
                     this.redraw();
                 }
@@ -169,9 +169,12 @@ export class MFCCanvas {
                 this.gameView.drawHighlight(this.context, pos);
                 break;
             case TurnState.ROTATE_THE_TILE:
-                if (tile && tile.pos) {
-                    this.context.strokeStyle = "yellow";
-                    this.gameView.drawHighlight(this.context, tile.pos);
+                if (tile) {
+                    let tpos = tile.getPosition();
+                    if (tpos) {
+                        this.context.strokeStyle = "yellow";
+                        this.gameView.drawHighlight(this.context, tpos);
+                    }
                 }
                 break;
             default:

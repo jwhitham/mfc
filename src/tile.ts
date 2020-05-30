@@ -1,10 +1,10 @@
 
 import { GridXY, ScreenXY, ImageXY } from "./xy";
-import { Roadmap } from "./roadmap";
+import { Roadmap, Direction } from "./roadmap";
 
 export class Tile {
-    public pos: GridXY | null = null;
-    public rotation: number = 0;
+    private pos: GridXY | null = null;
+    private rotation: number = 0;
     private imageXY: ImageXY;
     private imageTileSize: number = 0;
     private image: HTMLImageElement;
@@ -12,15 +12,30 @@ export class Tile {
 
     constructor(image: HTMLImageElement,
                 imageXY: ImageXY, imageTileSize: number,
-                roadmap: Roadmap) {
+                roadmapCodes: string) {
         this.image = image;
         this.imageXY = imageXY;
         this.imageTileSize = imageTileSize;
-        this.roadmap = roadmap;
+        this.roadmap = new Roadmap(roadmapCodes);
     }
 
-    public getRoadmap(): Roadmap {
-        return this.roadmap;
+    public setPosition(pos: GridXY | null) {
+        this.pos = pos;
+    }
+
+    public getPosition(): GridXY | null {
+        return this.pos;
+    }
+
+    public isAt(pos: GridXY): boolean {
+        if (this.pos) {
+            return (pos.x == this.pos.x) && (pos.y == this.pos.y);
+        }
+        return false;
+    }
+
+    public rotate() {
+        this.rotation = (this.rotation + 1) % 4;
     }
 
     public draw(context: CanvasRenderingContext2D,
@@ -37,6 +52,7 @@ export class Tile {
                           this.imageXY.x, this.imageXY.y,
                           this.imageTileSize, this.imageTileSize,
                           -half, -half, drawTileSize, drawTileSize);
+        this.roadmap.getRoad(Direction.NORTH)
         context.restore();
     }
 }

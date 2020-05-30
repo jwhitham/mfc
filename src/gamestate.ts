@@ -36,12 +36,12 @@ export class GameState {
     public getTileAt(pos: GridXY): Tile | null {
         let placed = this.placed;
         let tile = this.getCurrentTile();
-        if (tile && tile.pos && (tile.pos.x == pos.x) && (tile.pos.y == pos.y)) {
+        if (tile && tile.isAt(pos)) {
             return tile;
         }
         for (let i = 0; i < placed.length; i++) {
             tile = placed[i];
-            if (tile.pos && (tile.pos.x == pos.x) && (tile.pos.y == pos.y)) {
+            if (tile.isAt(pos)) {
                 return tile;
             }
         }
@@ -61,18 +61,20 @@ export class GameState {
         }
         for (let i = 0; i < placed.length; i++) {
             let tile: Tile = placed[i];
-            if (tile.pos && tile.pos.x == pos.x) {
-                if (tile.pos.y == pos.y) {
+            let tpos = tile.getPosition();
+
+            if (tpos && tpos.x == pos.x) {
+                if (tpos.y == pos.y) {
                     return false; // tile already placed there
-                } else if (tile.pos.y == (pos.y - 1)) {
+                } else if (tpos.y == (pos.y - 1)) {
                     nextTo = true;
-                } else if (tile.pos.y == (pos.y + 1)) {
+                } else if (tpos.y == (pos.y + 1)) {
                     nextTo = true;
                 }
-            } else if (tile.pos && tile.pos.y == pos.y) {
-                if (tile.pos.x == (pos.x - 1)) {
+            } else if (tpos && tpos.y == pos.y) {
+                if (tpos.x == (pos.x - 1)) {
                     nextTo = true;
-                } else if (tile.pos.x == (pos.x + 1)) {
+                } else if (tpos.x == (pos.x + 1)) {
                     nextTo = true;
                 }
             }

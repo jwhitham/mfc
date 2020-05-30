@@ -26,11 +26,12 @@ export class GameView {
         this.max = new GridXY(initial, initial);
         for (let i = 0; i < placed.length; i++) {
             let tile: Tile = placed[i];
-            if (tile.pos) {
-                this.min.x = Math.min(this.min.x, tile.pos.x - 1);
-                this.min.y = Math.min(this.min.y, tile.pos.y - 1);
-                this.max.x = Math.max(this.max.x, tile.pos.x + 1);
-                this.max.y = Math.max(this.max.y, tile.pos.y + 2);
+            let tpos = tile.getPosition();
+            if (tpos) {
+                this.min.x = Math.min(this.min.x, tpos.x - 1);
+                this.min.y = Math.min(this.min.y, tpos.y - 1);
+                this.max.x = Math.max(this.max.x, tpos.x + 1);
+                this.max.y = Math.max(this.max.y, tpos.y + 2);
             }
         }
     }
@@ -72,8 +73,9 @@ export class GameView {
     }
 
     public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
-        if (tile.pos) {
-            let xy = this.getScreenXY(tile.pos);
+        let tpos = tile.getPosition();
+        if (tpos) {
+            let xy = this.getScreenXY(tpos);
             tile.draw(context, xy, this.drawTileSize);
         }
     }

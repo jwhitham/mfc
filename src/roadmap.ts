@@ -135,19 +135,20 @@ export class Roadmap {
     }
 
     private addEnd(direction: Direction) {
+        // If a road is not present on the map, add a dead end
         if (this.getRoad(direction) == null) {
             this.roads.push(new Road(direction, Direction.END, []));
         }
     }
 
-    public getRoad(direction: Direction): Road {
+    public getRoad(direction: Direction): Road | null {
         for (let i = 0; i < this.roads.length; i++) {
             let r = this.roads[i];
             if (r.hasDirection(direction)) {
                 return r;
             }
         }
-        throw "unable to get road for direction";
+        return null;
     }
 
     public link(toTarget: Direction, target: Roadmap): Road {
@@ -164,6 +165,9 @@ export class Roadmap {
 
         let sourceRoad = source.getRoad(toTarget);
         let targetRoad = target.getRoad(toSource);
+        if ((!sourceRoad) || (!targetRoad)) {
+            throw "road is missing for direction";
+        }
 
         sourceRoad.connect(targetRoad);
         return sourceRoad;
