@@ -4,8 +4,9 @@ import { TileSet } from "./tileset";
 import { GameState } from "./gamestate";
 import { GameView } from "./gameview";
 import { FloatingButton } from "./floatingbutton";
+import { ImageTracker } from "./imagetracker";
 
-enum TurnState {
+const enum TurnState {
     AWAIT_MY_TURN,
     PLACE_THE_TILE,
     ROTATE_THE_TILE,
@@ -25,6 +26,7 @@ export class MFCCanvas {
     private acceptButton: FloatingButton;
     private rotateButton: FloatingButton;
     private cancelButton: FloatingButton;
+    private imageTracker: ImageTracker;
 
 
     constructor() {
@@ -37,7 +39,8 @@ export class MFCCanvas {
 
         this.canvas = canvas;
         this.context = context;
-        this.tileSet = new TileSet();
+        this.imageTracker = new ImageTracker(() => this.loadingComplete());
+        this.tileSet = new TileSet(this.imageTracker);
         this.gameState = new GameState(this.tileSet);
         this.gameView = new GameView(this.gameState);
         let firstTile = this.gameState.getCurrentTile();
@@ -46,15 +49,13 @@ export class MFCCanvas {
         }
         this.gameState.nextTile();
 
-        this.acceptButton = new FloatingButton("accept.png", this.gameView, -1, 1);
-        this.rotateButton = new FloatingButton("rotate.png", this.gameView, 0, 1);
-        this.cancelButton = new FloatingButton("cancel.png", this.gameView, 1, 1);
-
-        this.createUserEvents();
-        this.redraw();
+        this.acceptButton = new FloatingButton(this.imageTracker.request("accept.png"), this.gameView, -1, 1);
+        this.rotateButton = new FloatingButton(this.imageTracker.request("rotate.png"), this.gameView, 0, 1);
+        this.cancelButton = new FloatingButton(this.imageTracker.request("cancel.png"), this.gameView, 1, 1);
+        this.imageTracker.start();
     }
 
-    private createUserEvents() {
+    private loadingComplete() {
         let canvas = this.canvas;
 
         canvas.addEventListener("mousedown", (e: MouseEvent) => this.pressEventHandler(e));
@@ -64,9 +65,13 @@ export class MFCCanvas {
         canvas.addEventListener("touchmove", (e: TouchEvent) => this.dragEventHandler(e));
 
         window.addEventListener("resize", () => this.redraw(), false);
+        this.redraw();
     }
 
     private redraw() {
+        if (!this.imageTracker.isReady()) {
+            return;
+        }
         let context = this.context;
         let canvas = this.canvas;
         canvas.width = window.innerWidth;

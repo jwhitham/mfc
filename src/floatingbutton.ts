@@ -14,9 +14,8 @@ export class FloatingButton {
     private hAlign: number = 0;
     private vAlign: number = 0;
 
-    constructor(src: string, gameView: GameView, hAlign: number, vAlign: number) {
-        this.image = new Image();
-        this.image.src = src;
+    constructor(image: HTMLImageElement, gameView: GameView, hAlign: number, vAlign: number) {
+        this.image = image;
         this.gameView = gameView;
         this.hAlign = hAlign;
         this.vAlign = vAlign;

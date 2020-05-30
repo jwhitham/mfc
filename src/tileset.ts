@@ -1,6 +1,7 @@
 
 import { ImageXY } from "./xy";
 import { Tile } from "./tile";
+import { ImageTracker } from "./imagetracker";
 
 const gridSize = 6;               // "mfc_tiles.jpg" is a 6x6 grid
 const tileSize = 310;             // each tile is roughly 310x310 pixels
@@ -25,9 +26,8 @@ const roadmap: string[] =
 export class TileSet {
     private image: HTMLImageElement;    // "mfc_tiles.jpg"
 
-    constructor() {
-        this.image = new Image();
-        this.image.src = "mfc_tiles.jpg";
+    constructor(imageTracker: ImageTracker) {
+        this.image = imageTracker.request("mfc_tiles.jpg");
     }
 
     public getInitialTiles(): Tile[] {
