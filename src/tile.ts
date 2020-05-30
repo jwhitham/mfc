@@ -1,6 +1,7 @@
 
 import { GridXY, ScreenXY, ImageXY } from "./xy";
-import { Roadmap, Road, Player } from "./roadmap";
+import { Roadmap, Road } from "./roadmap";
+import { PlayerColour } from "./player";
 import { Direction, getVector, getRotated, getRadians } from "./direction";
 
 let DEBUG_ROADS = true;
@@ -69,15 +70,15 @@ export class Tile {
                 context.lineWidth = half * 0.125;
             }
             switch (r.getMeeple()) {
-                case Player.RED:
+                case PlayerColour.RED:
                     context.strokeStyle = 'red'; break;
-                case Player.GREEN:
+                case PlayerColour.GREEN:
                     context.strokeStyle = 'green'; break;
-                case Player.BLUE:
+                case PlayerColour.BLUE:
                     context.strokeStyle = 'blue'; break;
-                case Player.YELLOW:
+                case PlayerColour.YELLOW:
                     context.strokeStyle = 'yellow'; break;
-                case Player.NONE:
+                case PlayerColour.NONE:
                     context.strokeStyle = 'white'; break;
             }
             context.beginPath();

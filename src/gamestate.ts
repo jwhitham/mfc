@@ -4,14 +4,20 @@ import { Tile } from "./tile";
 import { TileSet } from "./tileset";
 import { Road } from "./roadmap";
 import { Direction } from "./direction";
+import { Player } from "./player";
 
 export class GameState {
     private placed: Tile[] = [];
     private unplaced: Tile[] = [];
+    private players: Player[] = [];
 
     constructor(tileSet: TileSet) {
         this.unplaced = tileSet.getInitialTiles();
         // shuffle...!
+    }
+
+    public addPlayer(p: Player) {
+        this.players.push(p);
     }
 
     public getPlacedTiles(): Tile[] {
@@ -27,9 +33,10 @@ export class GameState {
         }
     }
 
-    public nextTile() {
+    public nextTile(): boolean {
         // finalise placement of a tile
         let newTile = this.getCurrentTile();
+        let gameOver = false;
         if (newTile) {
             this.unplaced.pop();
             this.placed.push(newTile);
@@ -47,10 +54,31 @@ export class GameState {
                                         this.getTileAt(new GridXY(pos.x - 1, pos.y))));
             }
         }
+
+        // any tiles left?
+        if (this.unplaced.length == 0) {
+            gameOver = true;
+        }
+
+        // did any player win?
+        for (let i = 0; i < this.players.length; i++) {
+            let p = this.players[i];
+            if (p.isWinner()) {
+                gameOver = true;
+            }
+        }
+        return gameOver;
     }
 
     private score(road: Road | null) {
-        // no action yet
+        if (!road) {
+            // road is incomplete
+            return;
+        }
+        for (let i = 0; i < this.players.length; i++) {
+            let p = this.players[i];
+            p.addScore(road.getScore(p.getColour()));
+        }
     }
 
     public getTileAt(pos: GridXY): Tile | null {

@@ -136,10 +136,9 @@ export class MFCCanvas {
                     this.redraw();
                 } else if (tile && this.acceptButton.intersect(xy)) {
                     // finish placing
-                    this.gameState.nextTile();
+                    let gameOver = this.gameState.nextTile();
                     this.redraw();
-                    tile = this.gameState.getCurrentTile();
-                    if (tile) {
+                    if (!gameOver) {
                         this.turnState = TurnState.PLACE_THE_TILE;
                     } else {
                         this.turnState = TurnState.END_OF_GAME;

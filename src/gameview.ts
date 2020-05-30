@@ -12,6 +12,7 @@ export class GameView {
     private max: GridXY = new GridXY(0, 0);
     private drawTileSize: number = 0;
     private topLeft: ScreenXY = new ScreenXY(0, 0);
+    private margin: ScreenXY = new ScreenXY(0, 0);
     private size: ScreenXY;
 
     constructor(gameState: GameState) {
@@ -41,6 +42,10 @@ export class GameView {
         // size is used for the background
         this.size = new ScreenXY(width, height);
 
+        // don't use the whole screen, side is used for score and status
+        this.margin = new ScreenXY(width / 4.0, 0);
+        width -= this.margin.x;
+
         // here we find out how many tiles should be shown
         this.computeBounds();
         let gridWidth = 1 + this.max.x - this.min.x;
@@ -54,7 +59,8 @@ export class GameView {
         // where are the corners?
         let tileWidth = this.drawTileSize * gridWidth;
         let tileHeight = this.drawTileSize * gridHeight;
-        this.topLeft = new ScreenXY((width - tileWidth) * 0.5, (height - tileHeight) * 0.5);
+        this.topLeft = new ScreenXY(this.margin.x + ((width - tileWidth) * 0.5),
+                                    this.margin.y + (height - tileHeight) * 0.5);
     }
 
     public getScreenXY(pos: GridXY): ScreenXY {
@@ -70,6 +76,10 @@ export class GameView {
 
     public getDrawTileSize(): number {
         return this.drawTileSize;
+    }
+
+    public drawScore(context: CanvasRenderingContext2D) {
+
     }
 
     public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
