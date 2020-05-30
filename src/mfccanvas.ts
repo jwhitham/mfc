@@ -152,28 +152,30 @@ export class MFCCanvas {
     }
 
     private dragEventHandler(e: MouseEvent | TouchEvent) {
+        let context = this.context;
+        context.save();
         if (this.undrawPos) {
-            this.gameView.drawAt(this.context, this.undrawPos);
+            this.gameView.drawAt(context, this.undrawPos);
         }
         let xy = this.getMousePos(e);
         let pos = this.gameView.getGridXY(xy);
         let tile = this.gameState.getCurrentTile();
-        this.gameView.drawAt(this.context, pos);
+        this.gameView.drawAt(context, pos);
         switch (this.turnState) {
             case TurnState.PLACE_THE_TILE:
                 if (tile && this.gameState.isValidPlacement(pos)) {
-                    this.context.strokeStyle = "white";
+                    context.strokeStyle = "white";
                 } else {
-                    this.context.strokeStyle = "red";
+                    context.strokeStyle = "red";
                 }
-                this.gameView.drawHighlight(this.context, pos);
+                this.gameView.drawHighlight(context, pos);
                 break;
             case TurnState.ROTATE_THE_TILE:
                 if (tile) {
                     let tpos = tile.getPosition();
                     if (tpos) {
-                        this.context.strokeStyle = "yellow";
-                        this.gameView.drawHighlight(this.context, tpos);
+                        context.strokeStyle = "yellow";
+                        this.gameView.drawHighlight(context, tpos);
                     }
                 }
                 break;
@@ -182,6 +184,7 @@ export class MFCCanvas {
         }
         this.undrawPos = pos;
         this.drawButtons(xy);
+        context.restore();
         e.preventDefault();
     }
 

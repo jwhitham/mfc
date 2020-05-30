@@ -2,6 +2,8 @@
 import { GridXY } from "./xy";
 import { Tile } from "./tile";
 import { TileSet } from "./tileset";
+import { Road } from "./roadmap";
+import { Direction } from "./direction";
 
 export class GameState {
     private placed: Tile[] = [];
@@ -26,11 +28,29 @@ export class GameState {
     }
 
     public nextTile() {
-        let tile = this.getCurrentTile();
-        if (tile) {
+        // finalise placement of a tile
+        let newTile = this.getCurrentTile();
+        if (newTile) {
             this.unplaced.pop();
-            this.placed.push(tile);
+            this.placed.push(newTile);
+
+            // scoring
+            let pos = newTile.getPosition();
+            if (pos) {
+                this.score(newTile.link(Direction.NORTH,
+                                        this.getTileAt(new GridXY(pos.x, pos.y - 1))));
+                this.score(newTile.link(Direction.EAST,
+                                        this.getTileAt(new GridXY(pos.x + 1, pos.y))));
+                this.score(newTile.link(Direction.SOUTH,
+                                        this.getTileAt(new GridXY(pos.x, pos.y + 1))));
+                this.score(newTile.link(Direction.WEST,
+                                        this.getTileAt(new GridXY(pos.x - 1, pos.y))));
+            }
         }
+    }
+
+    private score(road: Road | null) {
+        // no action yet
     }
 
     public getTileAt(pos: GridXY): Tile | null {

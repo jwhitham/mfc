@@ -1,20 +1,20 @@
 
-export enum Direction { NORTH, EAST, SOUTH, WEST, END };
-export enum Player { RED, YELLOW, GREEN, BLUE };
+export enum Player { RED, YELLOW, GREEN, BLUE, NONE };
+import { Direction, opposite, rotate } from "./direction";
 
 export class Road {
     private d1: Direction;
     private d2: Direction;
-    private meeples: Player[];
+    private meeple: Player;
     private connected: Road[] = [];
     private isEnd: boolean = false;
     private isFinished: boolean = false;
     private isVisited: boolean = false;
 
-    constructor(d1: Direction, d2: Direction, meeples: Player[]) {
+    constructor(d1: Direction, d2: Direction, meeple: Player) {
         this.d1 = d1;
         this.d2 = d2;
-        this.meeples = meeples;
+        this.meeple = meeple;
         this.isEnd = this.hasDirection(Direction.END);
     }
 
@@ -27,12 +27,33 @@ export class Road {
         if (this.isEnd) {
             if (this.connected.length == 1) {
                 this.isFinished = true;
+            } else {
+                throw "too many connections for an end road";
             }
         } else {
             if (this.connected.length == 2) {
                 this.isFinished = true;
+            } else if (this.connected.length > 2) {
+                throw "too many connections for a through road";
             }
         }
+    }
+
+    public getD1(): Direction {
+        return this.d1;
+    }
+
+    public getD2(): Direction {
+        return this.d2;
+    }
+
+    public getMeeple(): Player {
+        return this.meeple;
+    }
+
+    public rotate() {
+        this.d1 = rotate(this.d1);
+        this.d2 = rotate(this.d2);
     }
 
     private visit(callback: (r: Road) => void) {
@@ -70,10 +91,8 @@ export class Road {
     public getScore(colour: Player): number {
         let score = 0;
         this.visit((r: Road) => {
-            for (let i = 0; i < r.meeples.length; i++) {
-                if (colour == r.meeples[i]) {
-                    score ++;
-                }
+            if (colour == r.meeple) {
+                score ++;
             }
         });
         this.clear();
@@ -131,17 +150,24 @@ export class Roadmap {
         if (directions.length != 2) {
             throw "road must link exactly two edges: " + this.roadmapCodes;
         }
-        this.roads.push(new Road(directions[0], directions[1], meeples));
+        if (meeples.length > 1) {
+            throw "road must have at most one meeple: " + this.roadmapCodes;
+        }
+        if (meeples.length == 0) {
+            this.roads.push(new Road(directions[0], directions[1], Player.NONE));
+        } else {
+            this.roads.push(new Road(directions[0], directions[1], meeples[0]));
+        }
     }
 
     private addEnd(direction: Direction) {
         // If a road is not present on the map, add a dead end
         if (this.getRoad(direction) == null) {
-            this.roads.push(new Road(direction, Direction.END, []));
+            this.roads.push(new Road(direction, Direction.END, Player.NONE));
         }
     }
 
-    public getRoad(direction: Direction): Road | null {
+    private getRoad(direction: Direction): Road | null {
         for (let i = 0; i < this.roads.length; i++) {
             let r = this.roads[i];
             if (r.hasDirection(direction)) {
@@ -151,26 +177,37 @@ export class Roadmap {
         return null;
     }
 
-    public link(toTarget: Direction, target: Roadmap): Road {
+    public getRoads(): Road[] {
+        return this.roads;
+    }
+
+    public rotate() {
+        for (let i = 0; i < this.roads.length; i++) {
+            let r = this.roads[i];
+            r.rotate();
+        }
+    }
+
+    public link(toTarget: Direction, target: Roadmap): Road | null {
 
         let source = this;
-        let toSource = Direction.NORTH;
-        switch (toTarget) {
-            case Direction.NORTH: toSource = Direction.SOUTH; break;
-            case Direction.SOUTH: toSource = Direction.NORTH; break;
-            case Direction.WEST:  toSource = Direction.EAST; break;
-            case Direction.EAST:  toSource = Direction.WEST; break;
-            default:              throw "invalid direction"; break;
-        }
-
+        let toSource = opposite(toTarget);
         let sourceRoad = source.getRoad(toTarget);
         let targetRoad = target.getRoad(toSource);
         if ((!sourceRoad) || (!targetRoad)) {
             throw "road is missing for direction";
         }
+        if (sourceRoad == targetRoad) {
+            throw "road cannot connect to itself";
+        }
 
         sourceRoad.connect(targetRoad);
-        return sourceRoad;
+        targetRoad.connect(sourceRoad);
+        if (sourceRoad.isComplete()) {
+            return sourceRoad;
+        } else {
+            return null;
+        }
     }
 
 }
