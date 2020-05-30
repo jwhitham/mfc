@@ -2,7 +2,7 @@
 export const enum Direction { NORTH, EAST, SOUTH, WEST, END };
 import { ScreenXY } from "./xy";
 
-export function opposite(d: Direction) {
+export function getOpposite(d: Direction) {
     switch (d) {
         case Direction.NORTH: return Direction.SOUTH;
         case Direction.EAST:  return Direction.WEST;
@@ -12,7 +12,7 @@ export function opposite(d: Direction) {
     }
 }
 
-export function rotate(d: Direction) {
+export function getRotated(d: Direction) {
     switch (d) {
         case Direction.NORTH: return Direction.EAST;
         case Direction.EAST:  return Direction.SOUTH;

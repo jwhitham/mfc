@@ -1,7 +1,7 @@
 
 import { GridXY, ScreenXY, ImageXY } from "./xy";
 import { Roadmap, Road, Player } from "./roadmap";
-import { Direction, getVector, rotate, getRadians } from "./direction";
+import { Direction, getVector, getRotated, getRadians } from "./direction";
 
 let DEBUG_ROADS = true;
 
@@ -38,7 +38,7 @@ export class Tile {
     }
 
     public rotate() {
-        this.rotation = rotate(this.rotation);
+        this.rotation = getRotated(this.rotation);
         this.roadmap.rotate();
     }
 
@@ -99,10 +99,13 @@ export class Tile {
                           this.imageXY.x, this.imageXY.y,
                           this.imageTileSize, this.imageTileSize,
                           -half, -half, drawTileSize, drawTileSize);
-        if (DEBUG_ROADS) {
-            this.drawDebugRoads(context, half);
-        }
         context.restore();
+        if (DEBUG_ROADS) {
+            context.save();
+            context.translate(destXY.x + half, destXY.y + half);
+            this.drawDebugRoads(context, half);
+            context.restore();
+        }
     }
 }
 

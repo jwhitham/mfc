@@ -1,6 +1,6 @@
 
 export enum Player { RED, YELLOW, GREEN, BLUE, NONE };
-import { Direction, opposite, rotate } from "./direction";
+import { Direction, getOpposite, getRotated } from "./direction";
 
 export class Road {
     private d1: Direction;
@@ -52,8 +52,8 @@ export class Road {
     }
 
     public rotate() {
-        this.d1 = rotate(this.d1);
-        this.d2 = rotate(this.d2);
+        this.d1 = getRotated(this.d1);
+        this.d2 = getRotated(this.d2);
     }
 
     private visit(callback: (r: Road) => void) {
@@ -191,7 +191,7 @@ export class Roadmap {
     public link(toTarget: Direction, target: Roadmap): Road | null {
 
         let source = this;
-        let toSource = opposite(toTarget);
+        let toSource = getOpposite(toTarget);
         let sourceRoad = source.getRoad(toTarget);
         let targetRoad = target.getRoad(toSource);
         if ((!sourceRoad) || (!targetRoad)) {
