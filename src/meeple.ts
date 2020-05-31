@@ -6,28 +6,28 @@ export function getColourName(c: PlayerColour, intense: boolean): string {
     if (intense) {
         switch (c) {
             case PlayerColour.RED:
-                return '#ff8080';
+                return '#ff4020';
             case PlayerColour.GREEN:
-                return '#80ff80';
+                return '#20ff20';
             case PlayerColour.BLUE:
-                return '#8080ff';
+                return '#4080ff';
             case PlayerColour.YELLOW:
-                return '#ffff80';
+                return '#ffff40';
             default:
                 return '#ffffff';
         }
     } else {
         switch (c) {
             case PlayerColour.RED:
-                return '#c00000';
+                return '#ff0000';
             case PlayerColour.GREEN:
-                return '#00c000';
+                return '#00ff00';
             case PlayerColour.BLUE:
                 return '#0000ff';
             case PlayerColour.YELLOW:
-                return '#808000';
+                return '#ffff00';
             default:
-                return '#c0c0c0';
+                return '#ffffff';
         }
     }
 }
@@ -77,10 +77,20 @@ export function drawMeeple(context: CanvasRenderingContext2D,
     context.save();
     context.lineWidth = size * 0.1;
 
+    context.save();
+    context.translate(context.lineWidth, context.lineWidth);
     context.beginPath();
     drawPath(context, xy, size);
-    context.fillStyle = getColourName(colour, completed);
-    context.fill();
+    context.strokeStyle = 'black';
+    context.stroke();
+    context.restore();
+
+    if (completed) {
+        context.beginPath();
+        drawPath(context, xy, size);
+        context.fillStyle = getColourName(colour, false);
+        context.fill();
+    }
 
     context.beginPath();
     drawPath(context, xy, size);

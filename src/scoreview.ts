@@ -14,6 +14,7 @@ export class ScoreView {
     private fontName = "";
     private fontSize = 1;
     private fontSize2 = 1;
+    private meepleSize = 1;
     private width = 1;
 
     constructor(gameState: GameState) {
@@ -59,6 +60,7 @@ export class ScoreView {
             }
             this.fontSize = Math.ceil(height);
             this.fontSize2 = this.fontSize * 2;
+            this.meepleSize = this.fontSize * 0.9;
 
             // calculate width based on meeples and max score
             width = Math.max(this.fontSize2 * (MAX_SCORE + 1), width);
@@ -112,7 +114,7 @@ export class ScoreView {
             xy.y += this.fontSize2;
             for (let i = 1; i <= MAX_SCORE; i++) {
                 xy.x += this.fontSize;
-                drawMeeple(context, xy, this.fontSize, i <= score, colour);
+                drawMeeple(context, xy, this.meepleSize, i <= score, colour);
                 xy.x += this.fontSize;
             }
             xy.y += this.fontSize2;
@@ -127,7 +129,11 @@ export class ScoreView {
             context.fillText("Next Tile", xy.x, xy.y);
             xy.y += this.fontSize;
             xy.x = this.width * 0.25;
-            tile.draw(context, xy, this.width * 0.5);
+            let half = this.width * 0.5;
+            tile.draw(context, xy, half);
+            for (let p of this.gameState.getPlayers()) {
+                tile.drawMeeples(context, xy, half, p.getColour());
+            }
         }
 
         context.restore();

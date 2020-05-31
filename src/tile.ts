@@ -5,7 +5,7 @@ import { PlayerColour } from "./player";
 import { Direction, getVector, getRotated, getRadians } from "./direction";
 import { drawMeeple, getColourName } from "./meeple";
 
-let DEBUG_ROADS = true;
+let DEBUG_ROADS = false;
 
 export class Tile {
     private pos: GridXY | null = null;
@@ -89,7 +89,11 @@ export class Tile {
                 let xy2 = getVector(d2, half);
                 let xy = new ScreenXY(((xy1.x + xy2.x) * 0.5) + destXY.x + half,
                                       ((xy1.y + xy2.y) * 0.5) + destXY.y + half);
-                drawMeeple(context, xy, half * 0.2, r.isComplete(), colour);
+                if (r.isComplete()) {
+                    drawMeeple(context, xy, half * 0.4, true, colour);
+                } else {
+                    drawMeeple(context, xy, half * 0.3, false, colour);
+                }
             }
         }
     }
