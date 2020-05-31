@@ -117,6 +117,19 @@ export class ScoreView {
             }
             xy.y += this.fontSize2;
         }
+
+    
+        let tile = this.gameState.getCurrentTile();
+        if (tile && currentPlayer) {
+            xy.x = this.fontSize;
+            xy.y += this.fontSize2;
+            context.fillStyle = "white";
+            context.fillText("Next Tile", xy.x, xy.y);
+            xy.y += this.fontSize;
+            xy.x = this.width * 0.25;
+            tile.draw(context, xy, this.width * 0.5);
+        }
+
         context.restore();
     }
 }
