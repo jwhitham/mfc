@@ -37,18 +37,34 @@ function drawPath(context: CanvasRenderingContext2D,
                   size: number)
 {
     // both sides of body
-    for (let mirror = -1.0; mirror <= 1.0; mirror += 2.0) {
-    let points: []
-        context.moveTo(xy.x, xy.y + (size * 0.6));
-        context.lineTo(xy.x + (size * 0.4 * mirror), xy.y + size);
-        context.lineTo(xy.x + (size * mirror), xy.y + size);
-        context.lineTo(xy.x + (size * 0.6 * mirror), xy.y);
-        context.lineTo(xy.x + (size * mirror), xy.y + (-0.2 * size));
-        context.lineTo(xy.x + (size * mirror), xy.y + (-0.4 * size));
-        context.lineTo(xy.x + (size * 0.4 * mirror), xy.y + (-0.6 * size));
+
+    // draw the right hand side, from head downwards
+    let body: number[] = 
+       [0.4, -0.6,
+        1.0, -0.4,
+        1.0, -0.2,
+        0.6,  0.0,
+        1.0,  1.0,
+        0.4,  1.0,
+        0.0,  0.6];
+   
+    // mirror the right hand drawing commands for the left hand side, feet to head        
+    for (let i = body.length - 4; i >= 0; i -= 2) {
+        body.push(-body[i]); // x is mirrored
+        body.push(body[i + 1]); // y is the same
     }
-    // head
-    context.arc(xy.x, xy.y + (-0.6 * size), 0.4 * size, -Math.PI, 0, false);
+
+    // translate and scale
+    for (let i = 0; i < body.length; i += 2) {
+        body[i] = (body[i] * size) + xy.x;
+        body[i + 1] = (body[i + 1] * size) + xy.y;
+    }
+
+    context.moveTo(body[0], body[1]);
+    for (let i = 2; i < body.length; i += 2) {
+        context.lineTo(body[i], body[i + 1]);
+    }
+    context.arc(xy.x, body[1], size * 0.4, -Math.PI, 0.0, false);
 }
 
 export function drawMeeple(context: CanvasRenderingContext2D,

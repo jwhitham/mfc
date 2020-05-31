@@ -86,12 +86,13 @@ export class GameView {
         let metrics = context.measureText('PLAYER NAME');
         let yTextHeight = Math.abs(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent);
         let meepleGap = yTextHeight * 2;
+        let meepleSize = yTextHeight * 0.75;
 
         for (let p of this.gameState.getPlayers()) {
 
             let score = p.getScore();
             let colour = p.getColour();
-            xy.x = meepleGap;
+            xy.x = meepleGap - meepleSize;
             context.strokeStyle = getColourName(colour, true);
             context.fillStyle = context.strokeStyle;
             xy.y += yTextHeight;
@@ -99,7 +100,7 @@ export class GameView {
             xy.y += yTextHeight;
 
             for (let i = 1; i <= MAX_SCORE; i++) {
-                drawMeeple(context, xy, yTextHeight, i <= score, colour);
+                drawMeeple(context, xy, meepleSize, i <= score, colour);
                 xy.x += meepleGap;
             }
             xy.y += yTextHeight;
