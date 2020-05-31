@@ -4,7 +4,7 @@ import { Tile } from "./tile";
 import { TileSet } from "./tileset";
 import { Road } from "./roadmap";
 import { Direction } from "./direction";
-import { Player } from "./player";
+import { Player, PlayerColour } from "./player";
 
 export class GameState {
     private placed: Tile[] = [];
@@ -13,7 +13,37 @@ export class GameState {
 
     constructor(tileSet: TileSet) {
         this.unplaced = tileSet.getInitialTiles();
-        // shuffle...!
+        this.shuffle();
+    }
+
+    private shuffle() {
+        // Fisher-Yates, Durstenfeld variant
+        for (let i = this.unplaced.length - 1; i > 0; i--) {
+            // pick a tile j with 0 <= j <= i (note, j = i is possible)
+            let j = Math.floor(Math.random() * (i + 1));
+            // swap tiles i & j
+            let ti = this.unplaced[i];
+            let tj = this.unplaced[j];
+            this.unplaced[i] = tj;
+            this.unplaced[j] = ti;
+        }
+    }
+
+    public addPlayer(p: Player) {
+        if (p.getColour() == PlayerColour.NONE) {
+            throw "player can't have colour NONE";
+        }
+        for (let i = 0; i < this.players.length; i++) {
+            let p2 = this.players[i];
+            if (p2.getColour() == p.getColour()) {
+                throw "player with this colour was already added";
+            }
+        }
+        this.players.push(p);
+    }
+
+    public getPlayers(): Player[] {
+        return this.players;
     }
 
     public getPlacedTiles(): Tile[] {
