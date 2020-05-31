@@ -92,12 +92,13 @@ export class GameView {
 
             let score = p.getScore();
             let colour = p.getColour();
-            xy.x = meepleGap - meepleSize;
             context.strokeStyle = getColourName(colour, true);
             context.fillStyle = context.strokeStyle;
+            xy.x = meepleGap - meepleSize;
             xy.y += yTextHeight;
             context.fillText(p.getName(), xy.x, xy.y);
             xy.y += yTextHeight;
+            xy.x = meepleSize;
 
             for (let i = 1; i <= MAX_SCORE; i++) {
                 drawMeeple(context, xy, meepleSize, i <= score, colour);

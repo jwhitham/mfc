@@ -14,14 +14,17 @@ export class Tile {
     private imageTileSize: number = 0;
     private image: HTMLImageElement;
     private roadmap: Roadmap;
+    private tileId: string;
 
     constructor(image: HTMLImageElement,
                 imageXY: ImageXY, imageTileSize: number,
-                roadmapCodes: string) {
+                roadmapCodes: string,
+                tileId: string) {
         this.image = image;
         this.imageXY = imageXY;
         this.imageTileSize = imageTileSize;
         this.roadmap = new Roadmap(roadmapCodes);
+        this.tileId = tileId;
     }
 
     public setPosition(pos: GridXY | null) {
@@ -64,11 +67,8 @@ export class Tile {
             } else if (d2 == Direction.END) {
                 xy2 = getVector(d1, half * 0.5);
             }
-            context.lineWidth = half * 0.25;
-            if (r.isComplete()) {
-                context.lineWidth = half * 0.125;
-            }
-            context.strokeStyle = getColourName(r.getMeeple(), false);
+            context.lineWidth = half * 0.1;
+            context.strokeStyle = getColourName(r.getMeeple(), r.isComplete());
             context.beginPath();
             context.moveTo(xy1.x, xy1.y);
             context.lineTo(xy2.x, xy2.y);
@@ -112,6 +112,9 @@ export class Tile {
             context.save();
             context.translate(destXY.x + half, destXY.y + half);
             this.drawDebugRoads(context, half);
+            context.fillStyle = 'black';
+            context.font = '20px serif';
+            context.fillText(this.tileId, -half, half);
             context.restore();
         }
     }

@@ -18,8 +18,8 @@ const tileXY: number[] =
 const roadmap: string[] =
         ["", "weG", "nsY", "wsG;neR", "nsR", "nsB",
          "", "nsG", "ewY", "wsG;neR", "nsR", "ewB",
-         "", "wsR", "nwY;esG", "wsY", "wsG", "neB;swR",
-         "", "wsR", "neY;wsG", "nsG", "wsY", "wsB;neY",
+         "", "wsR", "nwY;esG", "esY", "esG", "neB;swR",
+         "", "esR", "neY;wsG", "nsG", "wsY", "wsB;neY",
          "wsB;neG", "nsY", "nwY;esR", "wnG;esB", "esB", "wsB;neY",
          "nsB", "nsR", "wsY;neR", "esG", "neB", "nwR;esB"];
 
@@ -32,9 +32,13 @@ export class TileSet {
 
     public getInitialTiles(): Tile[] {
         let allTiles: Tile[] = [];
+        let tileId: string;
+
         for (let i = 0; i < (gridSize * gridSize); i++) {
             let xy = new ImageXY(tileXY[i * 2], tileXY[(i * 2) + 1]);
-            allTiles.push(new Tile(this.image, xy, tileSize, roadmap[i]));
+            tileId = "" + (i % gridSize);
+            tileId = tileId + "," + Math.floor(i / gridSize);
+            allTiles.push(new Tile(this.image, xy, tileSize, roadmap[i], tileId));
         }
         return allTiles;
     }
