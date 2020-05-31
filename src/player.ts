@@ -1,6 +1,8 @@
 
 export enum PlayerColour { RED, YELLOW, GREEN, BLUE, NONE };
 
+export const MAX_SCORE = 8;
+
 export class Player {
 
     private colour: PlayerColour;
@@ -19,7 +21,7 @@ export class Player {
     }
 
     public isWinner(): boolean {
-        return this.score >= 8;
+        return this.score >= MAX_SCORE;
     }
 }
 

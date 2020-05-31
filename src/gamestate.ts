@@ -16,10 +16,6 @@ export class GameState {
         // shuffle...!
     }
 
-    public addPlayer(p: Player) {
-        this.players.push(p);
-    }
-
     public getPlacedTiles(): Tile[] {
         return this.placed;
     }

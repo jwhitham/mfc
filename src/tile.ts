@@ -78,20 +78,23 @@ export class Tile {
         }
     }
 
-    private drawScoredRoads(context: CanvasRenderingContext2D,
-                            half: number) {
+    public drawMeeples(context: CanvasRenderingContext2D,
+                       destXY: ScreenXY,
+                       drawTileSize: number,
+                       colour: PlayerColour) {
         let roads = this.roadmap.getRoads();
         for (let i = 0; i < roads.length; i++) {
             let r = roads[i];
-            if (r.getMeeple() == PlayerColour.NONE) {
-                continue;
+            if (r.getMeeple() == colour) {
+                let d1 = r.getD1();
+                let d2 = r.getD2();
+                let half = drawTileSize * 0.5;
+                let xy1 = getVector(d1, half);
+                let xy2 = getVector(d2, half);
+                let xy = new ScreenXY(((xy1.x + xy2.x) * 0.5) + destXY.x + half,
+                                      ((xy1.y + xy2.y) * 0.5) + destXY.y + half);
+                drawMeeple(context, xy, half * 0.2, r.isComplete(), colour);
             }
-            let d1 = r.getD1();
-            let d2 = r.getD2();
-            let xy1 = getVector(d1, half);
-            let xy2 = getVector(d2, half);
-            let xy = new ScreenXY((xy1.x + xy2.x) * 0.5, (xy1.y + xy2.y) * 0.5);
-            drawMeeple(context, xy, half * 0.2, r.isComplete(), r.getMeeple());
         }
     }
 
@@ -109,13 +112,12 @@ export class Tile {
                           -half, -half, drawTileSize, drawTileSize);
         context.restore();
 
-        context.save();
-        context.translate(destXY.x + half, destXY.y + half);
         if (DEBUG_ROADS) {
+            context.save();
+            context.translate(destXY.x + half, destXY.y + half);
             this.drawDebugRoads(context, half);
+            context.restore();
         }
-        this.drawScoredRoads(context, half);
-        context.restore();
     }
 }
 
