@@ -33,8 +33,7 @@ export class GameState {
         if (p.getColour() == PlayerColour.NONE) {
             throw "player can't have colour NONE";
         }
-        for (let i = 0; i < this.players.length; i++) {
-            let p2 = this.players[i];
+        for (let p2 of this.players) {
             if (p2.getColour() == p.getColour()) {
                 throw "player with this colour was already added";
             }
@@ -87,8 +86,7 @@ export class GameState {
         }
 
         // did any player win?
-        for (let i = 0; i < this.players.length; i++) {
-            let p = this.players[i];
+        for (let p of this.players) {
             if (p.isWinner()) {
                 gameOver = true;
             }
@@ -108,13 +106,11 @@ export class GameState {
     }
 
     public getTileAt(pos: GridXY): Tile | null {
-        let placed = this.placed;
         let tile = this.getCurrentTile();
         if (tile && tile.isAt(pos)) {
             return tile;
         }
-        for (let i = 0; i < placed.length; i++) {
-            tile = placed[i];
+        for (let tile of this.placed) {
             if (tile.isAt(pos)) {
                 return tile;
             }
@@ -124,17 +120,15 @@ export class GameState {
     }
 
     public isValidPlacement(pos: GridXY): boolean {
-        let placed = this.placed;
         let nextTo = false;
         if (this.getCurrentTile() == null) {
             return false; // no tile to place
         }
-        if (placed.length == 0) {
+        if (this.placed.length == 0) {
             // valid to place in 0, 0
             return (pos.x == 0) && (pos.y == 0);
         }
-        for (let i = 0; i < placed.length; i++) {
-            let tile: Tile = placed[i];
+        for (let tile of this.placed) {
             let tpos = tile.getPosition();
 
             if (tpos && tpos.x == pos.x) {

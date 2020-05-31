@@ -60,8 +60,7 @@ export class Road {
     private visit(callback: (r: Road) => void) {
         this.isVisited = true;
         callback(this);
-        for (let i = 0; i < this.connected.length; i++) {
-            let r = this.connected[i];
+        for (let r of this.connected) {
             if (!r.isVisited) {
                 r.visit(callback);
             }
@@ -70,8 +69,7 @@ export class Road {
 
     private clear() {
         this.isVisited = false;
-        for (let i = 0; i < this.connected.length; i++) {
-            let r = this.connected[i];
+        for (let r of this.connected) {
             if (r.isVisited) {
                 r.clear();
             }
@@ -180,8 +178,7 @@ export class Roadmap {
     }
 
     private getRoad(direction: Direction): Road | null {
-        for (let i = 0; i < this.roads.length; i++) {
-            let r = this.roads[i];
+        for (let r of this.roads) {
             if (r.hasDirection(direction)) {
                 return r;
             }
@@ -194,8 +191,7 @@ export class Roadmap {
     }
 
     public rotate() {
-        for (let i = 0; i < this.roads.length; i++) {
-            let r = this.roads[i];
+        for (let r of this.roads) {
             r.rotate();
         }
     }

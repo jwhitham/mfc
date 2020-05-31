@@ -54,9 +54,7 @@ export class Tile {
 
     private drawDebugRoads(context: CanvasRenderingContext2D,
                            half: number) {
-        let roads = this.roadmap.getRoads();
-        for (let i = 0; i < roads.length; i++) {
-            let r = roads[i];
+        for (let r of this.roadmap.getRoads()) {
             let d1 = r.getD1();
             let d2 = r.getD2();
             let xy1 = getVector(d1, half);
@@ -82,9 +80,7 @@ export class Tile {
                        destXY: ScreenXY,
                        drawTileSize: number,
                        colour: PlayerColour) {
-        let roads = this.roadmap.getRoads();
-        for (let i = 0; i < roads.length; i++) {
-            let r = roads[i];
+        for (let r of this.roadmap.getRoads()) {
             if (r.getMeeple() == colour) {
                 let d1 = r.getD1();
                 let d2 = r.getD2();

@@ -22,11 +22,9 @@ export class GameView {
     }
     
     private computeBounds() {
-        let placed = this.gameState.getPlacedTiles();
         this.min = new GridXY(-initial, -initial);
         this.max = new GridXY(initial, initial);
-        for (let i = 0; i < placed.length; i++) {
-            let tile: Tile = placed[i];
+        for (let tile of this.gameState.getPlacedTiles()) {
             let tpos = tile.getPosition();
             if (tpos) {
                 this.min.x = Math.min(this.min.x, tpos.x - 1);
@@ -79,7 +77,6 @@ export class GameView {
     }
 
     public drawScore(context: CanvasRenderingContext2D) {
-
     }
 
     public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
@@ -99,9 +96,8 @@ export class GameView {
             this.drawTile(context, tile);
         }
 
-        let placed = this.gameState.getPlacedTiles();
-        for (let i = 0; i < placed.length; i++) {
-            this.drawTile(context, placed[i]);
+        for (let tile of this.gameState.getPlacedTiles()) {
+            this.drawTile(context, tile);
         }
     }
 
