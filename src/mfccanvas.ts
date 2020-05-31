@@ -5,6 +5,7 @@ import { GameState } from "./gamestate";
 import { GameView } from "./gameview";
 import { FloatingButton } from "./floatingbutton";
 import { ImageTracker } from "./imagetracker";
+import { Player, PlayerColour } from "./player";
 
 const enum TurnState {
     AWAIT_MY_TURN,
@@ -47,6 +48,10 @@ export class MFCCanvas {
         if (firstTile) {
             firstTile.setPosition(new GridXY(0, 0));
         }
+        this.gameState.addPlayer(new Player(PlayerColour.RED, "Miss Scarlett"));
+        this.gameState.addPlayer(new Player(PlayerColour.GREEN, "Reverend Green"));
+        this.gameState.addPlayer(new Player(PlayerColour.BLUE, "Mrs Peacock"));
+        this.gameState.addPlayer(new Player(PlayerColour.YELLOW, "Colonel Mustard"));
         this.gameState.nextTile();
 
         this.acceptButton = new FloatingButton(this.imageTracker.request("accept.png"), this.gameView, -1, 1);

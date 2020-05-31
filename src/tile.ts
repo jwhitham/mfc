@@ -3,7 +3,7 @@ import { GridXY, ScreenXY, ImageXY } from "./xy";
 import { Roadmap, Road } from "./roadmap";
 import { PlayerColour } from "./player";
 import { Direction, getVector, getRotated, getRadians } from "./direction";
-import { drawMeeple, getColour } from "./meeple";
+import { drawMeeple, getColourName } from "./meeple";
 
 let DEBUG_ROADS = true;
 
@@ -68,7 +68,7 @@ export class Tile {
             if (r.isComplete()) {
                 context.lineWidth = half * 0.125;
             }
-            context.strokeStyle = getColour(r.getMeeple());
+            context.strokeStyle = getColourName(r.getMeeple(), false);
             context.beginPath();
             context.moveTo(xy1.x, xy1.y);
             context.lineTo(xy2.x, xy2.y);

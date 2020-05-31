@@ -7,9 +7,11 @@ export class Player {
 
     private colour: PlayerColour;
     private score: number = 0;
+    private name: string;
 
-    constructor(colour: PlayerColour) {
+    constructor(colour: PlayerColour, name: string) {
         this.colour = colour;
+        this.name = name;
     }
 
     public getColour(): PlayerColour {
@@ -18,6 +20,14 @@ export class Player {
 
     public addScore(s: number) {
         this.score += s;
+    }
+
+    public getName(): string {
+        return this.name;
+    }
+
+    public getScore(): number {
+        return this.score;
     }
 
     public isWinner(): boolean {

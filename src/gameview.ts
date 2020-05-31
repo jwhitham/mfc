@@ -2,6 +2,8 @@
 import { GridXY, ScreenXY } from "./xy";
 import { Tile } from "./tile";
 import { GameState } from "./gamestate";
+import { MAX_SCORE } from "./player";
+import { drawMeeple, getColourName } from "./meeple";
 
 const background: string = "brown";
 const initial = 3;
@@ -77,6 +79,33 @@ export class GameView {
     }
 
     public drawScore(context: CanvasRenderingContext2D) {
+        let xy = new ScreenXY(0, 0);
+
+        context.save();
+        context.font = '20px serif';
+        let metrics = context.measureText('PLAYER NAME');
+        let yTextHeight = Math.abs(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent);
+        let meepleGap = yTextHeight * 2;
+
+        for (let p of this.gameState.getPlayers()) {
+
+            let score = p.getScore();
+            let colour = p.getColour();
+            xy.x = meepleGap;
+            context.strokeStyle = getColourName(colour, true);
+            context.fillStyle = context.strokeStyle;
+            xy.y += yTextHeight;
+            context.fillText(p.getName(), xy.x, xy.y);
+            xy.y += yTextHeight;
+
+            for (let i = 1; i <= MAX_SCORE; i++) {
+                drawMeeple(context, xy, yTextHeight, i <= score, colour);
+                xy.x += meepleGap;
+            }
+            xy.y += yTextHeight;
+            xy.y += yTextHeight;
+        }
+        context.restore();
     }
 
     public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
@@ -84,6 +113,9 @@ export class GameView {
         if (tpos) {
             let xy = this.getScreenXY(tpos);
             tile.draw(context, xy, this.drawTileSize);
+            for (let p of this.gameState.getPlayers()) {
+                tile.drawMeeples(context, xy, this.drawTileSize, p.getColour());
+            }
         }
     }
 
@@ -99,6 +131,7 @@ export class GameView {
         for (let tile of this.gameState.getPlacedTiles()) {
             this.drawTile(context, tile);
         }
+        this.drawScore(context);
     }
 
     public drawAt(context: CanvasRenderingContext2D, pos: GridXY) {
