@@ -129,14 +129,14 @@ export class MFCCanvas {
 
         switch (this.turnState) {
             case TurnState.PLACE_THE_TILE:
-                if (tile && this.gameState.isValidPlacement(pos)) {
+                if (tile && pos && this.gameState.isValidPlacement(pos)) {
                     tile.setPosition(pos);
                     this.turnState = TurnState.ROTATE_THE_TILE;
                     this.redraw();
                 }
                 break;
             case TurnState.ROTATE_THE_TILE:
-                if (tile && this.rotateButton.intersect(xy)) {
+                if (tile && pos && this.rotateButton.intersect(xy)) {
                     tile.rotate();
                     this.redraw();
                 } else if (tile && this.acceptButton.intersect(xy)) {
@@ -169,15 +169,18 @@ export class MFCCanvas {
         let xy = this.getMousePos(e);
         let pos = this.gameView.getGridXY(xy);
         let tile = this.gameState.getCurrentTile();
-        this.gameView.drawAt(context, pos);
+        if (pos) {
+            this.gameView.drawAt(context, pos);
+        }
         switch (this.turnState) {
             case TurnState.PLACE_THE_TILE:
-                if (tile && this.gameState.isValidPlacement(pos)) {
+                if (tile && pos && this.gameState.isValidPlacement(pos)) {
                     context.strokeStyle = "white";
-                } else {
+                    this.gameView.drawHighlight(context, pos);
+                } else if (pos) {
                     context.strokeStyle = "red";
+                    this.gameView.drawHighlight(context, pos);
                 }
-                this.gameView.drawHighlight(context, pos);
                 break;
             case TurnState.ROTATE_THE_TILE:
                 if (tile) {

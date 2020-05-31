@@ -2,6 +2,7 @@
 import { GridXY, ScreenXY } from "./xy";
 import { Tile } from "./tile";
 import { GameState } from "./gamestate";
+import { ScoreView } from "./scoreview";
 
 const BACKGROUND = "brown";
 
@@ -13,15 +14,14 @@ export class GameView {
     private max: GridXY = new GridXY(0, 0);
     private drawTileSize: number = 0;
     private topLeft: ScreenXY = new ScreenXY(0, 0);
-    private margin: ScreenXY = new ScreenXY(0, 0);
     private size: ScreenXY;
     private scoreView: ScoreView;
+    private scoreWidth: number = 0;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
         this.size = new ScreenXY(100, 100);
         this.scoreView = new ScoreView(gameState);
-        this.computeScale(this.size.x, this.size.y);
     }
     
     private computeBounds() {
@@ -48,9 +48,9 @@ export class GameView {
         this.size = new ScreenXY(width, height);
 
         // don't use the whole screen, side is used for score and status
-        this.scoreView.computeScale(context, width / 5.0);
-        this.margin.x = this.scoreView.getWidth();
-        width -= this.margin.x;
+        this.scoreView.computeScale(context, canvas, width / 3.0);
+        this.scoreWidth = this.scoreView.getWidth();
+        width -= this.scoreWidth;
 
         // here we find out how many tiles should be shown
         this.computeBounds();
@@ -65,21 +65,19 @@ export class GameView {
         // where are the corners?
         let tileWidth = this.drawTileSize * gridWidth;
         let tileHeight = this.drawTileSize * gridHeight;
-        this.topLeft = new ScreenXY(this.margin.x + ((width - tileWidth) * 0.5),
-                                    this.margin.y + (height - tileHeight) * 0.5);
+        this.topLeft = new ScreenXY(this.scoreWidth + ((width - tileWidth) * 0.5),
+                                    (height - tileHeight) * 0.5);
     }
 
     public getScreenXY(pos: GridXY): ScreenXY {
-        xy = new ScreenXY(this.topLeft.x + (this.drawTileSize * (pos.x - this.min.x)),
-                          this.topLeft.y + (this.drawTileSize * (pos.y - this.min.y)));
-        if (xy.x < this.margin.x) {
-            return null;
-        } else {
-            return xy;
-        }
+        return new ScreenXY(this.topLeft.x + (this.drawTileSize * (pos.x - this.min.x)),
+                            this.topLeft.y + (this.drawTileSize * (pos.y - this.min.y)));
     }
 
-    public getGridXY(xy: ScreenXY): GridXY {
+    public getGridXY(xy: ScreenXY): GridXY | null {
+        if (xy.x <= this.topLeft.x) {
+            return null;
+        }
         return new GridXY(Math.floor((xy.x - this.topLeft.x) / this.drawTileSize) + this.min.x,
                           Math.floor((xy.y - this.topLeft.y) / this.drawTileSize) + this.min.y);
 
@@ -93,18 +91,16 @@ export class GameView {
         let tpos = tile.getPosition();
         if (tpos) {
             let xy = this.getScreenXY(tpos);
-            if (xy) {
-                tile.draw(context, xy, this.drawTileSize);
-                for (let p of this.gameState.getPlayers()) {
-                    tile.drawMeeples(context, xy, this.drawTileSize, p.getColour());
-                }
+            tile.draw(context, xy, this.drawTileSize);
+            for (let p of this.gameState.getPlayers()) {
+                tile.drawMeeples(context, xy, this.drawTileSize, p.getColour());
             }
         }
     }
 
     public drawAll(context: CanvasRenderingContext2D) {
         context.fillStyle = BACKGROUND;
-        context.fillRect(this.margin.x, 0, this.size.x - this.margin.x, this.size.y);
+        context.fillRect(this.scoreWidth, 0, this.size.x - this.scoreWidth, this.size.y);
 
         let tile = this.gameState.getCurrentTile();
         if (tile) {
@@ -123,10 +119,8 @@ export class GameView {
             this.drawTile(context, tile);
         } else {
             let xy = this.getScreenXY(pos);
-            if (xy) {
-                context.fillStyle = BACKGROUND;
-                context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
-            }
+            context.fillStyle = BACKGROUND;
+            context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
         }
     }
 
@@ -135,10 +129,8 @@ export class GameView {
         let xy = this.getScreenXY(pos);
         let hPad = 5;
         let sPad = hPad * 2;
-        if (xy) {
-            context.strokeRect(xy.x + hPad, xy.y + hPad,
-                               this.drawTileSize - sPad, this.drawTileSize - sPad);
-        }
+        context.strokeRect(xy.x + hPad, xy.y + hPad,
+                           this.drawTileSize - sPad, this.drawTileSize - sPad);
     }
 }
 

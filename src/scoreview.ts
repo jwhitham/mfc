@@ -1,69 +1,108 @@
 
+import { ScreenXY } from "./xy";
+import { GameState } from "./gamestate";
 import { drawMeeple, getColourName } from "./meeple";
 import { MAX_SCORE } from "./player";
-const SCORE_FONT = '20px serif';
 
 
-class ScoreView {
+const BACKGROUND = "black";
+
+export class ScoreView {
+
+    private gameState: GameState;
+    private size: ScreenXY;
+    private fontName = "";
+    private fontSize = 1;
+    private fontSize2 = 1;
+    private width = 1;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
         this.size = new ScreenXY(100, 100);
-        this.computeScale(this.size.x, this.size.y);
     }
 
-    public computeScale(context: CanvasRenderingContext2D, maxWidth: number) {
+    public computeScale(context: CanvasRenderingContext2D,
+                        canvas: HTMLCanvasElement,
+                        maxWidth: number) {
+
         context.save();
+        // size is used for the background
+        let width = canvas.width;
+        let height = canvas.height;
+        this.size = new ScreenXY(width, height);
 
         // decide on an appropriate font size for this scale
         // aim is to fit into maxWidth
+        let minFont = 8;
+        let maxFont = 200;
+        let minWidth = maxWidth * 0.8;
+        let lastSize = 0;
+        while (1) {
+            let requestSize = Math.floor((minFont + maxFont) / 2);
+            if (requestSize == lastSize) {
+                break;
+            }
+            lastSize = requestSize;
+            context.font = this.fontName = "" + requestSize + "px serif";
+
+            // drawn at alphabetic baseline
+
+            // measure font size top of em square - bottom of em square
+
+            // calculate width, height based on text printed with font
+            let width = 1;
+            let height = 1;
+            for (let p of this.gameState.getPlayers()) {
+                let metrics = context.measureText(p.getName());
+                width = Math.max(metrics.width, width);
+                height = Math.max(metrics.actualBoundingBoxAscent, height);
+            }
+            this.fontSize = Math.ceil(height);
+            this.fontSize2 = this.fontSize * 2;
+
+            // calculate width based on meeples and max score
+            width = Math.max(this.fontSize2 * (MAX_SCORE + 1), width);
+            width = Math.ceil(width);
+            this.width = width;
+
+            if (width >= maxWidth) {
+                maxFont = this.fontSize;
+            } else if (width < minWidth) {
+                minFont = this.fontSize;
+            } else {
+                break;
+            }
+        }
+        context.restore();
     }
 
-    public tryScale(context: CanvasRenderingContext2D, fontPixels: number) {
-        context.font = "" + fontPixels + "px Serif";
-        for (let p of this.gameState.getPlayers()) {
-            let metrics = context.measureText(p.getName());
-            width = Math.max(metrics.width, width);
-
-        let textMaxWidth = 0;
-
-
-            textMaxHeight = Math.max(textMaxHeight,
-                                     Math.abs(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent));
-            textMaxWidth = Math.max(textMaxWidth, metrics.width);
-        }
-
-        this.scoreMeepleSize = yTextHeight * 0.75;
+    public getWidth(): number {
+        return this.width;
     }
 
     public drawScore(context: CanvasRenderingContext2D) {
         let xy = new ScreenXY(0, 0);
 
         context.save();
-        context.font = '20px serif';
-        let metrics = context.measureText('PLAYER NAME');
-        let yTextHeight = Math.abs(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent);
-        let meepleGap = yTextHeight * 2;
-        let meepleSize = yTextHeight * 0.75;
+        context.fillStyle = BACKGROUND;
+        context.fillRect(0, 0, this.width, this.size.y);
+        context.font = this.fontName;
 
         for (let p of this.gameState.getPlayers()) {
-
-            let score = p.getScore();
             let colour = p.getColour();
+            let score = p.getScore();
+            xy.x = this.fontSize;
+            xy.y += this.fontSize2;
             context.strokeStyle = getColourName(colour, true);
             context.fillStyle = context.strokeStyle;
-            xy.x = meepleGap - meepleSize;
-            xy.y += yTextHeight;
             context.fillText(p.getName(), xy.x, xy.y);
-            xy.y += yTextHeight;
-            xy.x = meepleSize;
-
+            xy.y += this.fontSize2;
             for (let i = 1; i <= MAX_SCORE; i++) {
-                drawMeeple(context, xy, meepleSize, i <= score, colour);
-                xy.x += meepleGap;
+                xy.x += this.fontSize;
+                drawMeeple(context, xy, this.fontSize, i <= score, colour);
+                xy.x += this.fontSize;
             }
-            xy.y += yTextHeight;
-            xy.y += yTextHeight;
+            xy.y += this.fontSize2;
         }
         context.restore();
     }
