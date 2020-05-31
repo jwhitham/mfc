@@ -2,11 +2,10 @@
 import { GridXY, ScreenXY } from "./xy";
 import { Tile } from "./tile";
 import { GameState } from "./gamestate";
-import { MAX_SCORE } from "./player";
-import { drawMeeple, getColourName } from "./meeple";
 
-const background: string = "brown";
-const initial = 3;
+const BACKGROUND = "brown";
+
+
 
 export class GameView {
     private gameState: GameState;
@@ -16,14 +15,17 @@ export class GameView {
     private topLeft: ScreenXY = new ScreenXY(0, 0);
     private margin: ScreenXY = new ScreenXY(0, 0);
     private size: ScreenXY;
+    private scoreView: ScoreView;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
         this.size = new ScreenXY(100, 100);
+        this.scoreView = new ScoreView(gameState);
         this.computeScale(this.size.x, this.size.y);
     }
     
     private computeBounds() {
+        const initial = 3;
         this.min = new GridXY(-initial, -initial);
         this.max = new GridXY(initial, initial);
         for (let tile of this.gameState.getPlacedTiles()) {
@@ -37,13 +39,17 @@ export class GameView {
         }
     }
 
-    public computeScale(width: number, height: number) {
+    public computeScale(context: CanvasRenderingContext2D,
+                        canvas: HTMLCanvasElement) {
 
         // size is used for the background
+        let width = canvas.width;
+        let height = canvas.height;
         this.size = new ScreenXY(width, height);
 
         // don't use the whole screen, side is used for score and status
-        this.margin = new ScreenXY(width / 4.0, 0);
+        this.scoreView.computeScale(context, width / 5.0);
+        this.margin.x = this.scoreView.getWidth();
         width -= this.margin.x;
 
         // here we find out how many tiles should be shown
@@ -64,8 +70,13 @@ export class GameView {
     }
 
     public getScreenXY(pos: GridXY): ScreenXY {
-        return new ScreenXY(this.topLeft.x + (this.drawTileSize * (pos.x - this.min.x)),
-                            this.topLeft.y + (this.drawTileSize * (pos.y - this.min.y)));
+        xy = new ScreenXY(this.topLeft.x + (this.drawTileSize * (pos.x - this.min.x)),
+                          this.topLeft.y + (this.drawTileSize * (pos.y - this.min.y)));
+        if (xy.x < this.margin.x) {
+            return null;
+        } else {
+            return xy;
+        }
     }
 
     public getGridXY(xy: ScreenXY): GridXY {
@@ -78,52 +89,22 @@ export class GameView {
         return this.drawTileSize;
     }
 
-    public drawScore(context: CanvasRenderingContext2D) {
-        let xy = new ScreenXY(0, 0);
-
-        context.save();
-        context.font = '20px serif';
-        let metrics = context.measureText('PLAYER NAME');
-        let yTextHeight = Math.abs(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent);
-        let meepleGap = yTextHeight * 2;
-        let meepleSize = yTextHeight * 0.75;
-
-        for (let p of this.gameState.getPlayers()) {
-
-            let score = p.getScore();
-            let colour = p.getColour();
-            context.strokeStyle = getColourName(colour, true);
-            context.fillStyle = context.strokeStyle;
-            xy.x = meepleGap - meepleSize;
-            xy.y += yTextHeight;
-            context.fillText(p.getName(), xy.x, xy.y);
-            xy.y += yTextHeight;
-            xy.x = meepleSize;
-
-            for (let i = 1; i <= MAX_SCORE; i++) {
-                drawMeeple(context, xy, meepleSize, i <= score, colour);
-                xy.x += meepleGap;
-            }
-            xy.y += yTextHeight;
-            xy.y += yTextHeight;
-        }
-        context.restore();
-    }
-
     public drawTile(context: CanvasRenderingContext2D, tile: Tile) {
         let tpos = tile.getPosition();
         if (tpos) {
             let xy = this.getScreenXY(tpos);
-            tile.draw(context, xy, this.drawTileSize);
-            for (let p of this.gameState.getPlayers()) {
-                tile.drawMeeples(context, xy, this.drawTileSize, p.getColour());
+            if (xy) {
+                tile.draw(context, xy, this.drawTileSize);
+                for (let p of this.gameState.getPlayers()) {
+                    tile.drawMeeples(context, xy, this.drawTileSize, p.getColour());
+                }
             }
         }
     }
 
     public drawAll(context: CanvasRenderingContext2D) {
-        context.fillStyle = background;
-        context.fillRect(0, 0, this.size.x, this.size.y);
+        context.fillStyle = BACKGROUND;
+        context.fillRect(this.margin.x, 0, this.size.x - this.margin.x, this.size.y);
 
         let tile = this.gameState.getCurrentTile();
         if (tile) {
@@ -133,7 +114,7 @@ export class GameView {
         for (let tile of this.gameState.getPlacedTiles()) {
             this.drawTile(context, tile);
         }
-        this.drawScore(context);
+        this.scoreView.drawScore(context);
     }
 
     public drawAt(context: CanvasRenderingContext2D, pos: GridXY) {
@@ -142,8 +123,10 @@ export class GameView {
             this.drawTile(context, tile);
         } else {
             let xy = this.getScreenXY(pos);
-            context.fillStyle = background;
-            context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
+            if (xy) {
+                context.fillStyle = BACKGROUND;
+                context.fillRect(xy.x, xy.y, this.drawTileSize, this.drawTileSize);
+            }
         }
     }
 
@@ -152,8 +135,10 @@ export class GameView {
         let xy = this.getScreenXY(pos);
         let hPad = 5;
         let sPad = hPad * 2;
-        context.strokeRect(xy.x + hPad, xy.y + hPad,
-                           this.drawTileSize - sPad, this.drawTileSize - sPad);
+        if (xy) {
+            context.strokeRect(xy.x + hPad, xy.y + hPad,
+                               this.drawTileSize - sPad, this.drawTileSize - sPad);
+        }
     }
 }
 

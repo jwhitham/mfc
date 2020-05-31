@@ -81,7 +81,7 @@ export class MFCCanvas {
         let canvas = this.canvas;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        this.gameView.computeScale(canvas.width, canvas.height);
+        this.gameView.computeScale(context, canvas);
         this.gameView.drawAll(context);
         this.undrawPos = null;
         this.drawButtons(new ScreenXY(-100, -100));
