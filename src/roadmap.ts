@@ -10,6 +10,7 @@ export class Road {
     private isEnd: boolean = false;
     private isFinished: boolean = false;
     private isVisited: boolean = false;
+    private complete: boolean = false;
 
     constructor(d1: Direction, d2: Direction, meeple: PlayerColour) {
         this.d1 = d1;
@@ -78,17 +79,28 @@ export class Road {
     }
 
     public isComplete(): boolean {
-        let complete = true;
+        return this.complete;
+    }
+
+    public updateComplete() {
+        this.complete = true;
         this.visit((r: Road) => {
             if (!r.isFinished) {
-                complete = false;
+                this.complete = false;
             }
         });
         this.clear();
-        return complete;
+
+        if (this.complete) {
+            this.visit((r: Road) => { r.complete = true; });
+            this.clear();
+        }
     }
 
     public getScore(colour: PlayerColour): number {
+        if (!this.complete) {
+            return 0;
+        }
         let score = 0;
         this.visit((r: Road) => {
             if (colour == r.meeple) {
@@ -203,6 +215,7 @@ export class Roadmap {
 
         sourceRoad.connect(targetRoad);
         targetRoad.connect(sourceRoad);
+        sourceRoad.updateComplete();
         if (sourceRoad.isComplete()) {
             return sourceRoad;
         } else {

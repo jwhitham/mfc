@@ -3,6 +3,7 @@ import { GridXY, ScreenXY, ImageXY } from "./xy";
 import { Roadmap, Road } from "./roadmap";
 import { PlayerColour } from "./player";
 import { Direction, getVector, getRotated, getRadians } from "./direction";
+import { drawMeeple, getColour } from "./meeple";
 
 let DEBUG_ROADS = true;
 
@@ -69,22 +70,28 @@ export class Tile {
             if (r.isComplete()) {
                 context.lineWidth = half * 0.125;
             }
-            switch (r.getMeeple()) {
-                case PlayerColour.RED:
-                    context.strokeStyle = 'red'; break;
-                case PlayerColour.GREEN:
-                    context.strokeStyle = 'green'; break;
-                case PlayerColour.BLUE:
-                    context.strokeStyle = 'blue'; break;
-                case PlayerColour.YELLOW:
-                    context.strokeStyle = 'yellow'; break;
-                case PlayerColour.NONE:
-                    context.strokeStyle = 'white'; break;
-            }
+            context.strokeStyle = getColour(r.getMeeple());
             context.beginPath();
             context.moveTo(xy1.x, xy1.y);
             context.lineTo(xy2.x, xy2.y);
             context.stroke();
+        }
+    }
+
+    private drawScoredRoads(context: CanvasRenderingContext2D,
+                            half: number) {
+        let roads = this.roadmap.getRoads();
+        for (let i = 0; i < roads.length; i++) {
+            let r = roads[i];
+            if (r.getMeeple() == PlayerColour.NONE) {
+                continue;
+            }
+            let d1 = r.getD1();
+            let d2 = r.getD2();
+            let xy1 = getVector(d1, half);
+            let xy2 = getVector(d2, half);
+            let xy = new ScreenXY((xy1.x + xy2.x) * 0.5, (xy1.y + xy2.y) * 0.5);
+            drawMeeple(context, xy, half * 0.2, r.isComplete(), r.getMeeple());
         }
     }
 
@@ -101,12 +108,14 @@ export class Tile {
                           this.imageTileSize, this.imageTileSize,
                           -half, -half, drawTileSize, drawTileSize);
         context.restore();
+
+        context.save();
+        context.translate(destXY.x + half, destXY.y + half);
         if (DEBUG_ROADS) {
-            context.save();
-            context.translate(destXY.x + half, destXY.y + half);
             this.drawDebugRoads(context, half);
-            context.restore();
         }
+        this.drawScoredRoads(context, half);
+        context.restore();
     }
 }
 
