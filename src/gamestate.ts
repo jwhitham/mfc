@@ -10,6 +10,7 @@ export class GameState {
     private placed: Tile[] = [];
     private unplaced: Tile[] = [];
     private players: Player[] = [];
+    private currentPlayer: number = -1;
 
     constructor(tileSet: TileSet) {
         this.unplaced = tileSet.getInitialTiles();
@@ -45,12 +46,19 @@ export class GameState {
         return this.players;
     }
 
+    public getCurrentPlayer(): Player | null {
+        if (this.currentPlayer >= 0) {
+            return this.players[this.currentPlayer];
+        } else {
+            return null;
+        }
+    }
+
     public getPlacedTiles(): Tile[] {
         return this.placed;
     }
 
     public getCurrentTile(): Tile | null {
-
         if (this.unplaced.length) {
             return this.unplaced[this.unplaced.length - 1];
         } else {
@@ -90,6 +98,18 @@ export class GameState {
             if (p.isWinner()) {
                 gameOver = true;
             }
+        }
+
+        // no players, no game!
+        if (this.players.length == 0) {
+            gameOver = true;
+        }
+
+        // next player
+        if (gameOver) {
+            this.currentPlayer = -1;
+        } else {
+            this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
         }
         return gameOver;
     }

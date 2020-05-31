@@ -88,12 +88,25 @@ export class ScoreView {
         context.fillRect(0, 0, this.width, this.size.y);
         context.font = this.fontName;
 
+        let currentPlayer = this.gameState.getCurrentPlayer();
+        let pHeight = this.fontSize2 * 3;
+
         for (let p of this.gameState.getPlayers()) {
             let colour = p.getColour();
             let score = p.getScore();
+
+            context.strokeStyle = getColourName(colour, true);
+            if (p.isWinner()) {
+                context.fillStyle = "#806080";
+                context.fillRect(0, xy.y, this.width, pHeight);
+                context.strokeRect(0, xy.y, this.width, pHeight);
+            } else if (p == currentPlayer) {
+                context.fillStyle = "#404040";
+                context.fillRect(0, xy.y, this.width, pHeight);
+                context.strokeRect(0, xy.y, this.width, pHeight);
+            }
             xy.x = this.fontSize;
             xy.y += this.fontSize2;
-            context.strokeStyle = getColourName(colour, true);
             context.fillStyle = context.strokeStyle;
             context.fillText(p.getName(), xy.x, xy.y);
             xy.y += this.fontSize2;
