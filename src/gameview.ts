@@ -2,7 +2,6 @@
 import { GridXY, ScreenXY } from "./xy";
 import { Tile } from "./tile";
 import { GameState } from "./gamestate";
-import { ScoreView } from "./scoreview";
 
 const BACKGROUND = "brown";
 
@@ -15,13 +14,11 @@ export class GameView {
     private drawTileSize: number = 0;
     private topLeft: ScreenXY = new ScreenXY(0, 0);
     private size: ScreenXY;
-    private scoreView: ScoreView;
-    private scoreWidth: number = 0;
+
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
         this.size = new ScreenXY(100, 100);
-        this.scoreView = new ScoreView(gameState);
     }
     
     private computeBounds() {
@@ -47,11 +44,6 @@ export class GameView {
         let height = canvas.height;
         this.size = new ScreenXY(width, height);
 
-        // don't use the whole screen, side is used for score and status
-        this.scoreView.computeScale(context, canvas, width / 3.0);
-        this.scoreWidth = this.scoreView.getWidth();
-        width -= this.scoreWidth;
-
         // here we find out how many tiles should be shown
         this.computeBounds();
         let gridWidth = 1 + this.max.x - this.min.x;
@@ -65,7 +57,7 @@ export class GameView {
         // where are the corners?
         let tileWidth = this.drawTileSize * gridWidth;
         let tileHeight = this.drawTileSize * gridHeight;
-        this.topLeft = new ScreenXY(this.scoreWidth + ((width - tileWidth) * 0.5),
+        this.topLeft = new ScreenXY((width - tileWidth) * 0.5,
                                     (height - tileHeight) * 0.5);
     }
 
@@ -100,7 +92,7 @@ export class GameView {
 
     public drawAll(context: CanvasRenderingContext2D) {
         context.fillStyle = BACKGROUND;
-        context.fillRect(this.scoreWidth, 0, this.size.x - this.scoreWidth, this.size.y);
+        context.fillRect(0, 0, this.size.x, this.size.y);
 
         let tile = this.gameState.getCurrentTile();
         if (tile) {
@@ -110,7 +102,6 @@ export class GameView {
         for (let tile of this.gameState.getPlacedTiles()) {
             this.drawTile(context, tile);
         }
-        this.scoreView.drawScore(context);
     }
 
     public drawAt(context: CanvasRenderingContext2D, pos: GridXY) {

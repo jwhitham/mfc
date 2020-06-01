@@ -15,7 +15,6 @@ export class ScoreView {
     private fontSize = 1;
     private fontSize2 = 1;
     private meepleSize = 1;
-    private width = 1;
 
     constructor(gameState: GameState) {
         this.gameState = gameState;
@@ -23,20 +22,19 @@ export class ScoreView {
     }
 
     public computeScale(context: CanvasRenderingContext2D,
-                        canvas: HTMLCanvasElement,
-                        maxWidth: number) {
+                        canvas: HTMLCanvasElement) {
 
         context.save();
         // size is used for the background
-        let width = canvas.width;
+        let maxWidth = canvas.width;
         let height = canvas.height;
-        this.size = new ScreenXY(width, height);
+        this.size = new ScreenXY(maxWidth, height);
 
         // decide on an appropriate font size for this scale
         // aim is to fit into maxWidth
         let minFont = 8;
         let maxFont = 200;
-        let minWidth = maxWidth * 0.8;
+        let minWidth = maxWidth * 0.9;
         let lastSize = 0;
         while (1) {
             let requestSize = Math.floor((minFont + maxFont) / 2);
@@ -65,7 +63,6 @@ export class ScoreView {
             // calculate width based on meeples and max score
             width = Math.max(this.fontSize2 * (MAX_SCORE + 1), width);
             width = Math.ceil(width);
-            this.width = width;
 
             if (width >= maxWidth) {
                 maxFont = this.fontSize;
@@ -78,16 +75,12 @@ export class ScoreView {
         context.restore();
     }
 
-    public getWidth(): number {
-        return this.width;
-    }
-
     public drawScore(context: CanvasRenderingContext2D) {
         let xy = new ScreenXY(0, 0);
 
         context.save();
         context.fillStyle = BACKGROUND;
-        context.fillRect(0, 0, this.width, this.size.y);
+        context.fillRect(0, 0, this.size.x, this.size.y);
         context.font = this.fontName;
 
         let currentPlayer = this.gameState.getCurrentPlayer();
@@ -100,12 +93,12 @@ export class ScoreView {
             context.strokeStyle = getColourName(colour, true);
             if (p.isWinner()) {
                 context.fillStyle = "#806080";
-                context.fillRect(0, xy.y, this.width, pHeight);
-                context.strokeRect(0, xy.y, this.width, pHeight);
+                context.fillRect(0, xy.y, this.size.x, pHeight);
+                context.strokeRect(0, xy.y, this.size.x, pHeight);
             } else if (p == currentPlayer) {
                 context.fillStyle = "#404040";
-                context.fillRect(0, xy.y, this.width, pHeight);
-                context.strokeRect(0, xy.y, this.width, pHeight);
+                context.fillRect(0, xy.y, this.size.x, pHeight);
+                context.strokeRect(0, xy.y, this.size.x, pHeight);
             }
             xy.x = this.fontSize;
             xy.y += this.fontSize2;
@@ -128,8 +121,8 @@ export class ScoreView {
             context.fillStyle = "white";
             context.fillText("Next Tile", xy.x, xy.y);
             xy.y += this.fontSize;
-            xy.x = this.width * 0.25;
-            let half = this.width * 0.5;
+            xy.x = this.size.x * 0.25;
+            let half = this.size.x * 0.5;
             tile.draw(context, xy, half);
             for (let p of this.gameState.getPlayers()) {
                 tile.drawMeeples(context, xy, half, p.getColour());

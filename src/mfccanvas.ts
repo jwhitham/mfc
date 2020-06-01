@@ -6,6 +6,7 @@ import { GameView } from "./gameview";
 import { FloatingButton } from "./floatingbutton";
 import { ImageTracker } from "./imagetracker";
 import { Player, PlayerColour } from "./player";
+import { ScoreView } from "./scoreview";
 
 const enum TurnState {
     AWAIT_MY_TURN,
@@ -28,10 +29,13 @@ export class MFCCanvas {
     private rotateButton: FloatingButton;
     private cancelButton: FloatingButton;
     private imageTracker: ImageTracker;
+    private scoreCanvas: HTMLCanvasElement;
+    private scoreContext: CanvasRenderingContext2D;
+    private scoreView: ScoreView;
 
 
     constructor() {
-        let canvas = document.getElementById('canvas') as HTMLCanvasElement;
+        let canvas = document.getElementById('canvas1') as HTMLCanvasElement;
         let context = canvas.getContext("2d") as CanvasRenderingContext2D;
         context.lineCap = 'round';
         context.lineJoin = 'round';
@@ -40,10 +44,15 @@ export class MFCCanvas {
 
         this.canvas = canvas;
         this.context = context;
+
+        this.scoreCanvas = document.getElementById('canvas2') as HTMLCanvasElement;
+        this.scoreContext = this.scoreCanvas.getContext("2d") as CanvasRenderingContext2D;
+
         this.imageTracker = new ImageTracker(() => this.loadingComplete());
         this.tileSet = new TileSet(this.imageTracker);
         this.gameState = new GameState(this.tileSet);
         this.gameView = new GameView(this.gameState);
+        this.scoreView = new ScoreView(this.gameState);
         let firstTile = this.gameState.getCurrentTile();
         if (firstTile) {
             firstTile.setPosition(new GridXY(0, 0));
@@ -85,6 +94,13 @@ export class MFCCanvas {
         this.gameView.drawAll(context);
         this.undrawPos = null;
         this.drawButtons(new ScreenXY(-100, -100));
+
+        context = this.scoreContext;
+        canvas = this.scoreCanvas;
+        canvas.width = Math.floor(window.innerWidth * 0.2);
+        canvas.height = window.innerHeight - 100;
+        this.scoreView.computeScale(context, canvas);
+        this.scoreView.drawScore(context);
     }
 
     private drawButtons(mouseXY: ScreenXY) {
